@@ -852,7 +852,7 @@ export default function App() {
           availableGroups={Array.from(new Set((contacts || []).flatMap(c => c.groups || [])))}
         />
       )}
-      <AIChat />
+      {user && <AIChat />}
     </Router>
     </ThemeProvider>
   );

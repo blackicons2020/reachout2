@@ -299,25 +299,29 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
                   onClick={() => setSchedule('now')}
                   className={cn(
                     "flex-1 p-3 border-2 rounded-2xl flex items-center gap-3 transition-all",
-                    schedule === 'now' ? "border-blue-600 bg-blue-50 shadow-sm" : "border-gray-100 hover:border-blue-200 hover:bg-gray-50"
+                    schedule === 'now' 
+                      ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20 shadow-sm" 
+                      : "border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-900/40 hover:bg-gray-50 dark:hover:bg-gray-800"
                   )}
                 >
-                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-colors", schedule === 'now' ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600")}>
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-colors", schedule === 'now' ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400")}>
                     <Send className="w-4 h-4" />
                   </div>
-                  <span className="font-bold text-xs text-gray-900">Send Now</span>
+                  <span className="font-bold text-xs text-gray-900 dark:text-white">Send Now</span>
                 </button>
                 <button 
                   onClick={() => setSchedule('future')}
                   className={cn(
                     "flex-1 p-3 border-2 rounded-2xl flex items-center gap-3 transition-all",
-                    schedule === 'future' ? "border-blue-600 bg-blue-50 shadow-sm" : "border-gray-100 hover:border-blue-200 hover:bg-gray-50"
+                    schedule === 'future' 
+                      ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20 shadow-sm" 
+                      : "border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-900/40 hover:bg-gray-50 dark:hover:bg-gray-800"
                   )}
                 >
-                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-colors", schedule === 'future' ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600")}>
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-colors", schedule === 'future' ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400")}>
                     <Calendar className="w-4 h-4" />
                   </div>
-                  <span className="font-bold text-xs text-gray-900">Schedule</span>
+                  <span className="font-bold text-xs text-gray-900 dark:text-white">Schedule</span>
                 </button>
               </div>
 
