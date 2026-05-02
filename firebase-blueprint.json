@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "organizations": {
+      "title": "Organization",
+      "description": "Multi-tenant organization data and integration settings.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "plan": { "type": "string", "enum": ["starter", "growth", "pro"] },
+        "settings": { "type": "object" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["name", "ownerId", "plan", "createdAt"]
+    },
+    "contacts": {
+      "title": "Contact",
+      "description": "Contact information for a specific organization.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "tags": { "type": "array" },
+        "groups": { "type": "array" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["orgId", "firstName", "lastName", "phone", "createdAt"]
+    },
+    "campaigns": {
+      "title": "Campaign",
+      "description": "Outreach campaigns (SMS, WhatsApp, Voice) with scheduling capabilities.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["sms", "whatsapp", "voice"] },
+        "status": { "type": "string", "enum": ["draft", "scheduled", "sending", "completed", "failed"] },
+        "message": { "type": "string" },
+        "targetGroups": { "type": "array" },
+        "targetTags": { "type": "array" },
+        "scheduleAt": { "type": "number" },
+        "recurring": { "type": "object", "description": "Optional recurring rules" },
+        "stats": { "type": "object" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["orgId", "name", "type", "status", "message", "createdAt"]
+    },
+    "interactions": {
+      "title": "Interaction",
+      "description": "Log of a specific communication event.",
+      "type": "object",
+      "properties": {
+        "contactId": { "type": "string" },
+        "campaignId": { "type": "string" },
+        "orgId": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["contactId", "campaignId", "orgId", "type", "status", "timestamp"]
+    },
+    "users": {
+      "title": "User",
+      "description": "User profile and organization relationship.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "orgId": { "type": "string" },
+        "role": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["email", "name", "orgId", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "organizations/{orgId}": {
+      "schema": "organizations",
+      "description": "Root organization documents."
+    },
+    "organizations/{orgId}/contacts/{contactId}": {
+      "schema": "contacts",
+      "description": "Organization contacts."
+    },
+    "organizations/{orgId}/campaigns/{campaignId}": {
+      "schema": "campaigns",
+      "description": "Organization campaigns."
+    },
+    "organizations/{orgId}/interactions/{interactionId}": {
+      "schema": "interactions",
+      "description": "Communication logs."
+    },
+    "users/{userId}": {
+      "schema": "users",
+      "description": "User profile data."
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "ReachOut",
+  "description": "A multi-tenant outreach platform for organizations to manage contacts and run SMS, WhatsApp, and AI Voice campaigns via paper scanning and digital imports.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": []
+}
