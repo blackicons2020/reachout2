@@ -88,7 +88,7 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
           {/* Campaign Type */}
           <div className="space-y-3">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Select Channel</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button 
                 onClick={() => setType('sms')}
                 className={cn(
@@ -115,7 +115,7 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
                 <span className="font-bold text-xs text-gray-900 dark:text-white">WhatsApp</span>
               </button>
 
-/*
+              {/*
               <button 
                 onClick={() => setType('email')}
                 className={cn(
@@ -128,7 +128,6 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
                 </div>
                 <span className="font-bold text-xs text-gray-900 dark:text-white">Email</span>
               </button>
-*/
 
               <button 
                 onClick={() => setType('voice')}
@@ -142,6 +141,7 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
                 </div>
                 <span className="font-bold text-xs text-gray-900 dark:text-white">AI Voice</span>
               </button>
+              */}
             </div>
           </div>
 
