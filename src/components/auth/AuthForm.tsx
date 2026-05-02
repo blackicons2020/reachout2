@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, ArrowRight, Apple, Chrome, Loader2, AlertCircle, Building2, Users, Shield, Link as LinkIcon } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Apple, Chrome, Loader2, AlertCircle, Building2, Users, Shield, Link as LinkIcon, Eye, EyeOff } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Logo } from '../layout/Logo';
@@ -26,6 +26,7 @@ export function AuthForm({ type }: AuthFormProps) {
   const [joinCode, setJoinCode] = useState(inviteCode || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [systemConfig, setSystemConfig] = useState<any>(null);
 
   useEffect(() => {
@@ -266,20 +267,31 @@ export function AuthForm({ type }: AuthFormProps) {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">Password</label>
-                {type === 'login' && (
+                {/* {type === 'login' && (
                   <button type="button" className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">Forgot password?</button>
-                )}
+                )} */}
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input 
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white dark:placeholder:text-slate-500"
+                  className="w-full pl-12 pr-12 py-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white dark:placeholder:text-slate-500"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 text-gray-400" />
+                  ) : (
+                    <Eye className="w-4 h-4 text-gray-400" />
+                  )}
+                </button>
               </div>
             </div>
 
