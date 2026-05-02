@@ -7,14 +7,10 @@ import cors from 'cors';
 import { GoogleGenAI } from "@google/genai";
 import admin from 'firebase-admin';
 import { addMinutes, addDays, addWeeks, addMonths, isBefore, startOfDay, set } from 'date-fns';
-import Stripe from 'stripe';
 import { Resend } from 'resend';
 
 // Paystack Integration
 const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
-
-// Stripe logic (kept for reference but disabled if no key)
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -97,53 +93,6 @@ async function startServer() {
     res.send(200);
   });
 
-  // Stripe Webhook MUST go before body parsers
-  app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-
-    if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
-      return res.status(500).send('Webhook secret not configured');
-    }
-
-    let event;
-
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig as string,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
-    } catch (err: any) {
-      console.error(`Webhook Error: ${err.message}`);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    // Handle the event
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const orgId = session.client_reference_id;
-      const customerId = session.customer as string;
-      const subscriptionId = session.subscription as string;
-
-      if (orgId) {
-        try {
-          // Update organization with subscription info
-          await firestore.collection('organizations').doc(orgId).update({
-            stripeCustomerId: customerId,
-            stripeSubscriptionId: subscriptionId,
-            subscriptionStatus: 'active',
-            updatedAt: Date.now(),
-          });
-          console.log(`[Webhook] Updated subscription for org: ${orgId}`);
-        } catch (error) {
-          console.error(`[Webhook] Error updating org ${orgId}:`, error);
-        }
-      }
-    }
-
-    res.json({ received: true });
-  });
-
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(bodyParser.json());
 
@@ -181,51 +130,6 @@ async function startServer() {
       }
     } catch (error: any) {
       console.error('Paystack Verification Error:', error);
-      res.status(500).json({ message: error.message });
-    }
-  });
-
-  // Stripe Billing Routes
-  app.post('/api/billing/create-checkout-session', async (req, res) => {
-    const { priceId, orgId, userId, userEmail } = req.body;
-
-    if (!stripe) {
-      return res.status(500).json({ message: 'Stripe is not configured on the server.' });
-    }
-
-    if (!orgId || !priceId) {
-      return res.status(400).json({ message: 'Missing required parameters.' });
-    }
-
-    try {
-      // Get org to check for existing customer ID
-      const orgDoc = await firestore.collection('organizations').doc(orgId).get();
-      const orgData = orgDoc.data();
-      const customerId = orgData?.stripeCustomerId;
-
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        customer_email: customerId ? undefined : userEmail,
-        client_reference_id: orgId,
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        mode: 'subscription',
-        success_url: `${req.headers.origin}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/billing?canceled=true`,
-        metadata: {
-          orgId,
-          userId,
-        },
-      });
-
-      res.json({ url: session.url });
-    } catch (error: any) {
-      console.error('Create Checkout Session Error:', error);
       res.status(500).json({ message: error.message });
     }
   });
