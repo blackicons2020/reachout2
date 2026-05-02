@@ -88,7 +88,7 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
           {/* Campaign Type */}
           <div className="space-y-3">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Select Channel</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <button 
                 onClick={() => setType('sms')}
                 className={cn(
@@ -115,6 +115,7 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
                 <span className="font-bold text-xs text-gray-900 dark:text-white">WhatsApp</span>
               </button>
 
+/*
               <button 
                 onClick={() => setType('email')}
                 className={cn(
@@ -127,6 +128,7 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
                 </div>
                 <span className="font-bold text-xs text-gray-900 dark:text-white">Email</span>
               </button>
+*/
 
               <button 
                 onClick={() => setType('voice')}
@@ -159,7 +161,7 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  {type === 'voice' ? 'Call Script' : type === 'email' ? 'Email Body' : 'Message Content'}
+                  {type === 'voice' ? 'Call Script' : /* type === 'email' ? 'Email Body' : */ 'Message Content'}
                 </label>
                 <div className="flex items-center gap-3">
                   <button 
@@ -182,7 +184,7 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
               </div>
               <textarea 
                 className="w-full h-28 p-4 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none text-sm dark:text-white dark:placeholder:text-slate-500"
-                placeholder={type === 'voice' ? "Write what the AI should say..." : type === 'email' ? "Type your email content here..." : "Type your message here..."}
+                placeholder={type === 'voice' ? "Write what the AI should say..." : /* type === 'email' ? "Type your email content here..." : */ "Type your message here..."}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
               />

@@ -52,7 +52,7 @@ export default function Members({ members, contacts, onInvite, onAssign, onDelet
   const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [invitePhone, setInvitePhone] = useState('');
-  const [inviteChannel, setInviteChannel] = useState<'email' | 'sms' | 'whatsapp'>('email');
+  const [inviteChannel, setInviteChannel] = useState<'email' | 'sms' | 'whatsapp'>('sms');
   const [inviteRole, setInviteRole] = useState('Field Agent');
 
   // Assign Form State
@@ -97,7 +97,7 @@ export default function Members({ members, contacts, onInvite, onAssign, onDelet
     setInviteName('');
     setInviteEmail('');
     setInvitePhone('');
-    setInviteChannel('email');
+    setInviteChannel('sms');
   };
 
   const handleAssignSubmit = (e: React.FormEvent) => {
@@ -620,9 +620,9 @@ export default function Members({ members, contacts, onInvite, onAssign, onDelet
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Invitation Channel</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {[
-                      { id: 'email', label: 'Email', icon: Mail },
+                      /* { id: 'email', label: 'Email', icon: Mail }, */
                       { id: 'sms', label: 'SMS', icon: MessageSquare },
                       { id: 'whatsapp', label: 'WhatsApp', icon: Smartphone }
                     ].map((channel) => (

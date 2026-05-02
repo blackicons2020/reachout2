@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReachOut Virtual Mobile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: { DEFAULT: "#6366f1", foreground: "#ffffff" },
+              background: { light: "#f8fafc", dark: "#020617" },
+              card: { light: "#ffffff", dark: "#0f172a" }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body { margin: 0; padding: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
+      #phone-frame { 
+        width: 375px; 
+        height: 812px; 
+        background: #020617; 
+        border: 12px solid #222; 
+        border-radius: 50px; 
+        overflow: hidden; 
+        position: relative; 
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+      #root { height: 100%; overflow-y: auto; }
+      #root::-webkit-scrollbar { display: none; }
+      /* Notch area */
+      #notch {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+        height: 30px;
+        background: #222;
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+        z-index: 100;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="phone-frame">
+      <div id="notch"></div>
+      <div id="root" class="dark"></div>
+    </div>
+    <script type="module" src="./preview-entry.tsx"></script>
+  </body>
+</html>

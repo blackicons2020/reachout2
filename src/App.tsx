@@ -673,7 +673,7 @@ export default function App() {
                 { label: 'Total Campaigns', value: campaigns.length.toString() },
                 { label: 'SMS Campaigns', value: campaigns.filter(c => c.type === 'sms').length.toString() },
                 { label: 'WhatsApp', value: campaigns.filter(c => c.type === 'whatsapp').length.toString() },
-                { label: 'Email Outreach', value: campaigns.filter(c => c.type === 'email').length.toString() },
+                /* { label: 'Email Outreach', value: campaigns.filter(c => c.type === 'email').length.toString() }, */
                 /* { label: 'AI Voice Calls', value: campaigns.filter(c => c.type === 'voice').length.toString() }, */
               ].filter(Boolean).map((stat: any) => (
                 <div key={stat.label} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
@@ -710,7 +710,7 @@ export default function App() {
                           <div className="flex items-center gap-2">
                             {c.type === 'sms' && <MessageSquare className="w-4 h-4 text-blue-500" />}
                             {c.type === 'whatsapp' && <MessageSquare className="w-4 h-4 text-green-500" />}
-                            {c.type === 'email' && <Mail className="w-4 h-4 text-orange-500" />}
+                            {/* {c.type === 'email' && <Mail className="w-4 h-4 text-orange-500" />} */}
                             {/* {c.type === 'voice' && <Phone className="w-4 h-4 text-purple-500" />} */}
                             <span className="text-xs font-medium uppercase dark:text-gray-300">{c.type}</span>
                           </div>

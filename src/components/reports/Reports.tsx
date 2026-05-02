@@ -80,7 +80,7 @@ export default function Reports({ campaigns: propCampaigns }: { campaigns?: any[
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard 
           title="Total Reached" 
           value={totalReached.toLocaleString()} 
@@ -102,6 +102,7 @@ export default function Reports({ campaigns: propCampaigns }: { campaigns?: any[
           icon={MessageSquare} 
           color="bg-purple-50 text-purple-600" 
         />
+        {/*
         <StatCard 
           title="Calls Answered" 
           value={voiceStats.delivered.toLocaleString()} 
@@ -109,6 +110,7 @@ export default function Reports({ campaigns: propCampaigns }: { campaigns?: any[
           icon={Phone} 
           color="bg-orange-50 text-orange-600" 
         />
+        */}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

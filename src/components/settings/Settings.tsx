@@ -387,6 +387,7 @@ export function Settings() {
                     </div>
                   )}
 
+/*
                   {editingIntegration === 'Resend' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-4">
                       <div className="col-span-2 space-y-2">
@@ -428,6 +429,7 @@ export function Settings() {
                       </div>
                     </div>
                   )}
+*/
 
                   {editingIntegration === 'WhatsApp Business API' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -504,6 +506,7 @@ export function Settings() {
                       color: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
                       connected: !!orgSettings.whatsapp.apiKey
                     },
+/*
                     { 
                       name: 'Resend', 
                       description: 'Professional email outreach using Resend API.', 
@@ -511,6 +514,7 @@ export function Settings() {
                       color: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
                       connected: !!orgSettings.email?.apiKey && !!orgSettings.email?.fromEmail
                     },
+*/
                     /* { 
                       name: 'Bland.ai', 
                       description: 'Power your AI Voice campaigns with natural conversations.', 
@@ -584,6 +588,7 @@ export function Settings() {
               </div>
 
               <div className="space-y-6">
+/*
                 <div className="space-y-4">
                   <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                     <Mail className="w-4 h-4" />
@@ -618,6 +623,7 @@ export function Settings() {
                     ))}
                   </div>
                 </div>
+*/
 
                 <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                   <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
