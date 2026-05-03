@@ -14,7 +14,7 @@ import { AuthForm } from './components/auth/AuthForm';
 import { CompleteProfile } from './components/auth/CompleteProfile';
 import { Contact, Campaign } from './types';
 import { generateId, cn } from './lib/utils';
-import { MessageSquare, Phone, Send, Edit2, Trash2, X, Copy, AlertCircle, CheckCircle2, Loader2, Shield, Activity, Mail } from 'lucide-react';
+import { MessageSquare, Phone, Send, Edit2, Trash2, X, Copy, AlertCircle, CheckCircle2, Loader2, Shield, Activity, Mail, Layers, MessageCircle } from 'lucide-react';
 import { outreachService } from './services/outreachService';
 import { 
   collection, 
@@ -670,14 +670,17 @@ export default function App() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { label: 'Total Campaigns', value: campaigns.length.toString() },
-                { label: 'SMS Campaigns', value: campaigns.filter(c => c.type === 'sms').length.toString() },
-                { label: 'WhatsApp', value: campaigns.filter(c => c.type === 'whatsapp').length.toString() },
-                /* { label: 'Email Outreach', value: campaigns.filter(c => c.type === 'email').length.toString() }, */
-                /* { label: 'AI Voice Calls', value: campaigns.filter(c => c.type === 'voice').length.toString() }, */
+                { label: 'Total Campaigns', value: campaigns.length.toString(), icon: Layers, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                { label: 'SMS Campaigns', value: campaigns.filter(c => c.type === 'sms').length.toString(), icon: MessageSquare, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+                { label: 'WhatsApp', value: campaigns.filter(c => c.type === 'whatsapp').length.toString(), icon: MessageCircle, color: 'text-green-500', bg: 'bg-green-500/10' },
               ].filter(Boolean).map((stat: any) => (
-                <div key={stat.label} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
-                  <p className="text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-2">{stat.label}</p>
+                <div key={stat.label} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-all hover:shadow-md group">
+                  <div className="flex justify-between items-start mb-4">
+                    <p className="text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider">{stat.label}</p>
+                    <div className={cn("p-2 rounded-xl", stat.bg)}>
+                      <stat.icon className={cn("w-5 h-5", stat.color)} />
+                    </div>
+                  </div>
                   <h3 className="text-3xl font-black text-gray-900 dark:text-white">{stat.value}</h3>
                 </div>
               ))}
