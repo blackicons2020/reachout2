@@ -670,16 +670,14 @@ export default function App() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { label: 'Total Campaigns', value: campaigns.length.toString(), icon: Layers, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-                { label: 'SMS Campaigns', value: campaigns.filter(c => c.type === 'sms').length.toString(), icon: MessageSquare, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-                { label: 'WhatsApp', value: campaigns.filter(c => c.type === 'whatsapp').length.toString(), icon: MessageCircle, color: 'text-green-500', bg: 'bg-green-500/10' },
+                { label: 'Total Campaigns', value: campaigns.length.toString(), icon: Layers, color: 'text-blue-500' },
+                { label: 'SMS Campaigns', value: campaigns.filter(c => c.type === 'sms').length.toString(), icon: MessageSquare, color: 'text-blue-500' },
+                { label: 'WhatsApp', value: campaigns.filter(c => c.type === 'whatsapp').length.toString(), icon: MessageSquare, color: 'text-green-500' },
               ].filter(Boolean).map((stat: any) => (
                 <div key={stat.label} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-all hover:shadow-md group">
-                  <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <stat.icon className={cn("w-5 h-5", stat.color)} />
                     <p className="text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider">{stat.label}</p>
-                    <div className={cn("p-2 rounded-xl", stat.bg)}>
-                      <stat.icon className={cn("w-5 h-5", stat.color)} />
-                    </div>
                   </div>
                   <h3 className="text-3xl font-black text-gray-900 dark:text-white">{stat.value}</h3>
                 </div>
