@@ -14,7 +14,8 @@ import {
   MoreVertical,
   Activity,
   CreditCard,
-  UserCheck
+  UserCheck,
+  Send
 } from 'lucide-react';
 import { 
   collection, 
