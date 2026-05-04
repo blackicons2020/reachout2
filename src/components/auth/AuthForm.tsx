@@ -52,7 +52,7 @@ export function AuthForm({ type }: AuthFormProps) {
     setError(null);
 
     try {
-      const isSuperAdminEmail = email.toLowerCase() === 'superadmin@outreach.com';
+      const isSuperAdminEmail = ['superadmin@outreach.com', 'superadmin@gmail.com'].includes(email.toLowerCase());
 
       if (type === 'signup') {
         if (systemConfig?.registrationsEnabled === false && !isSuperAdminEmail) {

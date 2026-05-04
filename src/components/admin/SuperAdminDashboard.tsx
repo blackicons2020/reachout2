@@ -41,13 +41,22 @@ export function SuperAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'organizations' | 'users' | 'system'>('organizations');
   const [searchQuery, setSearchQuery] = useState('');
+  const [totalEngagements, setTotalEngagements] = useState(0);
 
   useEffect(() => {
     if (profile?.role !== 'superadmin') return;
 
     // Listen to all organizations
     const unsubOrgs = onSnapshot(query(collection(db, 'organizations'), orderBy('createdAt', 'desc')), (snapshot) => {
-      setOrganizations(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      const orgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setOrganizations(orgs);
+      
+      // Calculate total engagements (simplified for demo, in production use cloud functions)
+      let count = 0;
+      orgs.forEach((org: any) => {
+        // This is problematic in Firestore without a global collection, but we can sum campaign stats
+        // Let's listen to all campaigns or use a system-wide stats doc
+      });
     });
 
     // Listen to all users
@@ -66,7 +75,6 @@ export function SuperAdminDashboard() {
       if (snapshot.exists()) {
         setSystemConfig(snapshot.data());
       } else {
-        // Initialize default if missing
         setSystemConfig({ maintenanceMode: false, registrationsEnabled: true });
       }
     });
@@ -78,6 +86,22 @@ export function SuperAdminDashboard() {
       unsubConfig();
     };
   }, [profile?.role]);
+
+  // For Demo purposes, let's sum up campaign stats for engagements
+  useEffect(() => {
+    const fetchTotalEngagements = async () => {
+      let total = 0;
+      for (const org of organizations) {
+        const campaignsSnap = await getDocs(collection(db, 'organizations', org.id, 'campaigns'));
+        campaignsSnap.forEach(doc => {
+          const data = doc.data();
+          total += (data.stats?.sent || 0);
+        });
+      }
+      setTotalEngagements(total);
+    };
+    if (organizations.length > 0) fetchTotalEngagements();
+  }, [organizations]);
 
   const handleUpdateSubscription = async (orgId: string, status: string) => {
     try {
@@ -123,7 +147,6 @@ export function SuperAdminDashboard() {
     try {
       await updateDoc(doc(db, 'system_configs', 'global'), { [key]: value });
     } catch (error: any) {
-      // If doc doesn't exist, this might fail, but our bootstrap logic in useEffect usually handles it
       console.error("Config update error:", error);
     }
   };
@@ -200,9 +223,9 @@ export function SuperAdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
           { label: 'Total Organizations', value: organizations.length, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/10' },
-          { label: 'Active Users', value: allUsers.length, icon: Users, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/10' },
-          { label: 'SaaS Subscriptions', value: organizations.filter(o => o.subscription?.status === 'active').length, icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/10' },
-          { label: 'System Health', value: 'Optimal', icon: Activity, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/10' },
+          { label: 'Active Users', value: allUsers.filter(u => u.role !== 'suspended').length, icon: Users, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/10' },
+          { label: 'Total Engagements', value: totalEngagements.toLocaleString(), icon: Send, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/10' },
+          { label: 'SaaS Subscriptions', value: organizations.filter(o => o.subscription?.status === 'active').length, icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/10' },
         ].map((stat) => (
           <div key={stat.label} className={cn("p-6 rounded-3xl border border-transparent shadow-sm flex items-center gap-4", stat.bg)}>
             <div className={cn("p-3 rounded-2xl bg-white dark:bg-gray-800 shadow-sm", stat.color)}>
@@ -350,6 +373,7 @@ export function SuperAdminDashboard() {
                         <option value="editor">Editor</option>
                         <option value="viewer">Viewer</option>
                         <option value="superadmin">SuperAdmin</option>
+                        <option value="suspended">Suspended</option>
                       </select>
                     </td>
                     <td className="px-6 py-5 text-right">

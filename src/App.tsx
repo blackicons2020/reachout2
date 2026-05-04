@@ -85,7 +85,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const adminEmails = ['superadmin@outreach.com', 'johnmeke2013@gmail.com'];
+    const adminEmails = ['superadmin@outreach.com', 'johnmeke2013@gmail.com', 'superadmin@gmail.com'];
     if (user?.email && adminEmails.includes(user.email) && profile && profile.role !== 'superadmin') {
       console.log("Bootstrapping SuperAdmin role for:", user.email);
       updateDoc(doc(db, 'users', user.uid), { 
