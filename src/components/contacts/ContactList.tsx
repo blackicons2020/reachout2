@@ -45,8 +45,9 @@ export function ContactList({
   onBulkAddTag,
   onBulkAddGroup,
   onImportContacts,
-  canManage = true
-}: ContactListProps) {
+  canManage = true,
+  organizationType = 'business'
+}: ContactListProps & { organizationType?: string }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -124,7 +125,11 @@ export function ContactList({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Contacts</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {organizationType === 'religious' ? 'Souls Database' : 
+             organizationType === 'political' ? 'Voter Database' : 
+             'Contacts'}
+          </h1>
           <p className="text-gray-500 dark:text-gray-400">Manage your organization's contact list and groups.</p>
         </div>
         {canManage && (

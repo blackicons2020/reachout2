@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 export const geminiService = {
-  async generateCampaignMessage(campaignName: string, channelType: string, context: string = '') {
+  async generateCampaignMessage(campaignName: string, channelType: string, organizationType: string = 'business', context: string = '') {
     const key = process.env.GEMINI_API_KEY;
     if (!key) {
       console.warn('GEMINI_API_KEY is missing. Returning mock message.');
@@ -12,10 +12,16 @@ export const geminiService = {
 
     try {
       const prompt = `
-        You are an expert campaign manager for an organization.
+        You are an expert campaign manager for a ${organizationType.toUpperCase()} organization.
         Generate a highly engaging and effective ${channelType.toUpperCase()} message for a campaign named "${campaignName}".
         ${context ? `Additional Context: ${context}` : ''}
         
+        Industry Specific Tone:
+        ${organizationType === 'religious' ? '- Spiritual, uplifting, community-focused, and inviting. Use words like "Blessings", "Join us", "Spiritual growth".' : 
+          organizationType === 'political' ? '- Mobilizing, urgent, patriotic, and clear. Focus on "Vision", "Future", "Vote", "Support", "Change".' : 
+          organizationType === 'education' ? '- Informative, professional, student-centric, and helpful.' : 
+          ' - Engaging, professional, and brand-focused.'}
+
         Guidelines:
         - Keep it concise and professional yet friendly.
         - For SMS: Keep it under 160 characters if possible.

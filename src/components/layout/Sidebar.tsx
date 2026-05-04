@@ -155,6 +155,17 @@ export function Sidebar({ onClose, notifications = [], contactCount = 0 }: { onC
                 const isActive = location.pathname === item.path;
                 const isNotifications = item.name === 'Notifications';
                 
+                let displayName = item.name;
+                if (item.name === 'Contacts') {
+                  if (organization?.type === 'religious') displayName = 'Souls Database';
+                  else if (organization?.type === 'political') displayName = 'Voter Database';
+                } else if (item.name === 'Campaigns') {
+                  if (organization?.type === 'religious') displayName = 'Outreach';
+                  else if (organization?.type === 'political') displayName = 'Engagements';
+                  else if (organization?.type === 'nonprofit') displayName = 'Engagements';
+                  else if (organization?.type === 'education') displayName = 'Engagements';
+                }
+
                 return (
                   <Link
                     key={item.path}
@@ -172,7 +183,7 @@ export function Sidebar({ onClose, notifications = [], contactCount = 0 }: { onC
                           "w-5 h-5 transition-transform duration-200 group-hover:scale-110",
                           isActive ? "text-white" : "text-gray-500 group-hover:text-blue-400"
                         )} />
-                        <span className="font-bold text-sm tracking-wide">{item.name}</span>
+                        <span className="font-bold text-sm tracking-wide">{displayName}</span>
                       </div>
                       {isNotifications && unreadCount > 0 && (
                       <span className="flex items-center justify-center w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full animate-pulse">

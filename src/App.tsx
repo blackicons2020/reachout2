@@ -43,6 +43,11 @@ import { ThemeProvider } from './hooks/useTheme';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { AIChat } from './components/ai/AIChat';
+import { ReligiousDashboard } from './components/dashboards/ReligiousDashboard';
+import { PoliticalDashboard } from './components/dashboards/PoliticalDashboard';
+import { NonProfitDashboard } from './components/dashboards/NonProfitDashboard';
+import { BusinessDashboard } from './components/dashboards/BusinessDashboard';
+import { EducationDashboard } from './components/dashboards/EducationDashboard';
 
 export default function App() {
   const { user, profile, organization, loading: authLoading } = useAuth();
@@ -610,7 +615,14 @@ export default function App() {
             </div>
           )}
           <Routes>
-            <Route path="/" element={isSuperAdmin ? <Navigate to="/superadmin" /> : (canAccessCoreFeatures ? <Dashboard campaigns={campaigns} /> : <Navigate to="/billing" />)} />
+            <Route path="/" element={isSuperAdmin ? <Navigate to="/superadmin" /> : (canAccessCoreFeatures ? (
+              organization?.type === 'religious' ? <ReligiousDashboard campaigns={campaigns} /> :
+              organization?.type === 'political' ? <PoliticalDashboard campaigns={campaigns} /> :
+              organization?.type === 'nonprofit' ? <NonProfitDashboard campaigns={campaigns} /> :
+              organization?.type === 'education' ? <EducationDashboard campaigns={campaigns} /> :
+              organization?.type === 'business' ? <BusinessDashboard campaigns={campaigns} /> :
+              <Dashboard campaigns={campaigns} />
+            ) : <Navigate to="/billing" />)} />
             <Route 
               path="/contacts" 
             element={
@@ -641,6 +653,7 @@ export default function App() {
                     canAddEditContacts && setIsImporting(true);
                   }} 
                   canManage={canAddEditContacts}
+                  organizationType={organization?.type}
                 />
               ) : <Navigate to="/billing" />
             } 
@@ -830,6 +843,7 @@ export default function App() {
       {isAddingContact && (
         <ContactForm 
           contact={editingContact}
+          organizationType={organization?.type}
           onSave={handleSaveContact}
           onClose={() => {
             setIsAddingContact(false);
@@ -851,6 +865,7 @@ export default function App() {
           brandName={orgSettings.profile?.brandName || organization?.name}
           autoBranding={orgSettings.profile?.autoBranding}
           availableGroups={Array.from(new Set((contacts || []).flatMap(c => c.groups || [])))}
+          organizationType={organization?.type}
         />
       )}
       {user && <AIChat />}

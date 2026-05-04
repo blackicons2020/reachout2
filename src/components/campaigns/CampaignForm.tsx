@@ -25,9 +25,10 @@ interface CampaignFormProps {
   availableGroups: string[];
   brandName?: string;
   autoBranding?: boolean;
+  organizationType?: string;
 }
 
-export function CampaignForm({ onSave, onClose, initialData, isDuplicating, availableGroups, brandName, autoBranding = true }: CampaignFormProps) {
+export function CampaignForm({ onSave, onClose, initialData, isDuplicating, availableGroups, brandName, autoBranding = true, organizationType }: CampaignFormProps) {
   const [type, setType] = useState<'sms' | 'whatsapp' | 'voice' | 'email'>(initialData?.type || 'sms');
   const [name, setName] = useState(isDuplicating ? `Copy of ${initialData?.name}` : (initialData?.name || ''));
   const [message, setMessage] = useState(initialData?.message || '');
@@ -57,7 +58,7 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
     }
     setIsGenerating(true);
     try {
-      const generated = await geminiService.generateCampaignMessage(name, type);
+      const generated = await geminiService.generateCampaignMessage(name, type, organizationType);
       setMessage(generated);
     } catch (error: any) {
       alert(error.message);

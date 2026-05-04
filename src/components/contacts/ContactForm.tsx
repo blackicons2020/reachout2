@@ -5,11 +5,12 @@ import { Contact } from '@/types';
 
 interface ContactFormProps {
   contact?: Contact | null;
+  organizationType?: string;
   onSave: (contact: Partial<Contact>) => void;
   onClose: () => void;
 }
 
-export function ContactForm({ contact, onSave, onClose }: ContactFormProps) {
+export function ContactForm({ contact, organizationType, onSave, onClose }: ContactFormProps) {
   const [firstName, setFirstName] = useState(contact?.firstName || '');
   const [lastName, setLastName] = useState(contact?.lastName || '');
   const [phone, setPhone] = useState(contact?.phone || '');
@@ -19,6 +20,12 @@ export function ContactForm({ contact, onSave, onClose }: ContactFormProps) {
   const [tags, setTags] = useState<string>(contact?.tags?.join(', ') || '');
   const [groups, setGroups] = useState<string>(contact?.groups?.join(', ') || '');
   const [status, setStatus] = useState<Contact['status']>(contact?.status || 'active');
+  
+  // Specific fields
+  const [location, setLocation] = useState(contact?.location || '');
+  const [source, setSource] = useState(contact?.source || '');
+  const [lga, setLga] = useState(contact?.lga || '');
+  const [ward, setWard] = useState(contact?.ward || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +38,11 @@ export function ContactForm({ contact, onSave, onClose }: ContactFormProps) {
       state,
       tags: tags.split(',').map(t => t.trim()).filter(t => t !== ''),
       groups: groups.split(',').map(g => g.trim()).filter(g => g !== ''),
-      status
+      status,
+      location,
+      source,
+      lga,
+      ward
     });
   };
 
@@ -130,6 +141,56 @@ export function ContactForm({ contact, onSave, onClose }: ContactFormProps) {
               </div>
             </div>
 
+            {organizationType === 'religious' && (
+              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Location / Church Branch</label>
+                  <input 
+                    type="text"
+                    placeholder="e.g. Main Sanctuary"
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Outreach Source</label>
+                  <input 
+                    type="text"
+                    placeholder="e.g. Street Evangelism"
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
+                    value={source}
+                    onChange={(e) => setSource(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {organizationType === 'political' && (
+              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">LGA</label>
+                  <input 
+                    type="text"
+                    placeholder="Local Government Area"
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
+                    value={lga}
+                    onChange={(e) => setLga(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Ward</label>
+                  <input 
+                    type="text"
+                    placeholder="Ward Number/Name"
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
+                    value={ward}
+                    onChange={(e) => setWard(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tags (comma separated)</label>
               <div className="relative">
@@ -169,6 +230,13 @@ export function ContactForm({ contact, onSave, onClose }: ContactFormProps) {
                   <option value="inactive" className="dark:bg-slate-950">Inactive</option>
                   <option value="lead" className="dark:bg-slate-950">Lead</option>
                   <option value="customer" className="dark:bg-slate-950">Customer</option>
+                  {organizationType === 'political' && (
+                    <>
+                      <option value="engaged" className="dark:bg-slate-950">Engaged</option>
+                      <option value="cold" className="dark:bg-slate-950">Cold</option>
+                      <option value="converted" className="dark:bg-slate-950">Converted</option>
+                    </>
+                  )}
                 </select>
             </div>
           </form>

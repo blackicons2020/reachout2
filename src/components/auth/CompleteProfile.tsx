@@ -16,12 +16,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { Logo } from '../layout/Logo';
 
 const ORG_TYPES = [
-  'Religious Organization',
-  'Non-profit/NGO',
-  'Education',
-  'Business',
-  'Political Organization',
-  'Others'
+  { label: 'Religious Organization', value: 'religious' },
+  { label: 'Non-profit/NGO', value: 'nonprofit' },
+  { label: 'Education', value: 'education' },
+  { label: 'Business', value: 'business' },
+  { label: 'Political Organization', value: 'political' },
+  { label: 'Others', value: 'others' }
 ];
 
 export function CompleteProfile() {
@@ -114,7 +114,7 @@ export function CompleteProfile() {
                 >
                   <option value="" className="bg-white dark:bg-gray-900 text-gray-500">Select a type...</option>
                   {ORG_TYPES.map(type => (
-                    <option key={type} value={type} className="bg-white dark:bg-gray-900">{type}</option>
+                    <option key={type.value} value={type.value} className="bg-white dark:bg-gray-900">{type.label}</option>
                   ))}
                 </select>
               </div>

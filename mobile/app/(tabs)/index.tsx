@@ -2,9 +2,33 @@ import React from 'react';
 import { StyleSheet, ScrollView, View, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PremiumCard } from '@/components/PremiumCard';
-import { Send, Users, Activity, Sparkles, Plus } from 'lucide-react-native';
+import { Send, Users, Activity, Sparkles, Plus, Heart, Vote, GraduationCap } from 'lucide-react-native';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function DashboardScreen() {
+  const { organization } = useAuth();
+  const orgType = organization?.type || 'business';
+
+  const getDashboardTitle = () => {
+    if (orgType === 'religious') return 'Religious Dashboard';
+    if (orgType === 'political') return 'Political Center';
+    if (orgType === 'education') return 'Academic Portal';
+    return 'ReachOut';
+  };
+
+  const getContactLabel = () => {
+    if (orgType === 'religious') return 'Souls';
+    if (orgType === 'political') return 'Voter Base';
+    if (orgType === 'education') return 'Students';
+    return 'Contacts';
+  };
+
+  const getCampaignLabel = () => {
+    if (orgType === 'religious') return 'Outreach';
+    if (['political', 'nonprofit', 'education'].includes(orgType)) return 'Engagements';
+    return 'Campaigns';
+  };
+
   return (
     <View className="flex-1 bg-background-light dark:bg-background-dark">
       <SafeAreaView className="flex-1">
@@ -13,7 +37,7 @@ export default function DashboardScreen() {
           <View className="flex-row justify-between items-center mb-8">
             <View>
               <Text className="text-slate-500 dark:text-slate-400 font-medium">Welcome back,</Text>
-              <Text className="text-slate-900 dark:text-white text-3xl font-bold">ReachOut</Text>
+              <Text className="text-slate-900 dark:text-white text-3xl font-bold">{getDashboardTitle()}</Text>
             </View>
             <TouchableOpacity className="bg-primary p-3 rounded-2xl shadow-lg shadow-indigo-500/50">
               <Plus color="white" size={24} />
@@ -28,7 +52,7 @@ export default function DashboardScreen() {
                 <Text className="text-indigo-100 font-bold uppercase text-xs tracking-widest">Autonomous Assistant</Text>
               </View>
               <Text className="text-white text-xl font-bold mb-1">AI is monitoring</Text>
-              <Text className="text-indigo-100 text-sm">3 contacts replied to your campaigns recently.</Text>
+              <Text className="text-indigo-100 text-sm">3 contacts replied to your {getCampaignLabel().toLowerCase()} recently.</Text>
             </View>
           </View>
 
@@ -47,15 +71,15 @@ export default function DashboardScreen() {
               <PremiumCard 
                 title="Active" 
                 value="8" 
-                subtitle="campaigns" 
+                subtitle={getCampaignLabel().toLowerCase()} 
                 icon={<Activity size={18} color="#6366f1" />}
               />
             </View>
             <View className="w-full">
               <PremiumCard 
-                title="Contacts" 
+                title={getContactLabel()} 
                 value="4,892" 
-                subtitle="Verified members" 
+                subtitle={`Verified ${getContactLabel().toLowerCase()}`} 
                 icon={<Users size={18} color="#6366f1" />}
               />
             </View>
@@ -74,10 +98,10 @@ export default function DashboardScreen() {
             <View key={i} className="bg-card-light dark:bg-card-dark p-4 rounded-2xl mb-3 flex-row items-center border border-slate-200 dark:border-slate-800">
               <View className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-xl mr-4">
                 <Send size={16} color="#10b981" />
-              </View>
+              </div>
               <View className="flex-1">
                 <Text className="text-slate-900 dark:text-white font-bold">Product Update SMS</Text>
-                <Text className="text-slate-400 text-xs">Sent to 452 contacts • 2h ago</Text>
+                <Text className="text-slate-400 text-xs">Sent to 452 {getContactLabel().toLowerCase()} • 2h ago</Text>
               </View>
             </View>
           ))}

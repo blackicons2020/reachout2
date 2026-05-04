@@ -8,6 +8,7 @@ export interface Organization {
   country?: string;
   defaultCountryCode: string;
   ownerId: string;
+  type: 'religious' | 'political' | 'nonprofit' | 'business' | 'education' | 'others';
   plan: 'starter' | 'growth' | 'pro';
   settings: {
     twilio?: {
@@ -57,7 +58,14 @@ export interface Contact {
   notes?: string;
   createdAt: number;
   lastContactedAt?: number;
-  status?: 'active' | 'inactive' | 'lead' | 'customer';
+  status?: 'active' | 'inactive' | 'lead' | 'customer' | 'engaged' | 'cold' | 'converted';
+  // Industry specific fields
+  location?: string; // Religious
+  outreachDate?: number; // Religious
+  source?: string; // Religious
+  state?: string; // Political
+  lga?: string; // Political
+  ward?: string; // Political
 }
 
 export interface Campaign {
