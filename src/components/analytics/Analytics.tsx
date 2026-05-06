@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { db } from '@/lib/firebase';
-import { collection, query, onSnapshot } from 'firebase/firestore';
+import api from '@/lib/api';
 import { 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -19,12 +14,8 @@ import {
   Area
 } from 'recharts';
 import { 
-  TrendingUp, 
-  TrendingDown, 
   Users, 
   MessageSquare, 
-  Phone, 
-  Calendar, 
   Download,
   Filter,
   ArrowUpRight,
@@ -33,38 +24,22 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const data = [
-  { name: 'Jan', sms: 4000, whatsapp: 2400, voice: 2400 },
-  { name: 'Feb', sms: 3000, whatsapp: 1398, voice: 2210 },
-  { name: 'Mar', sms: 2000, whatsapp: 9800, voice: 2290 },
-  { name: 'Apr', sms: 2780, whatsapp: 3908, voice: 2000 },
-  { name: 'May', sms: 1890, whatsapp: 4800, voice: 2181 },
-  { name: 'Jun', sms: 2390, whatsapp: 3800, voice: 2500 },
-  { name: 'Jul', sms: 3490, whatsapp: 4300, voice: 2100 },
-];
-
-const pieData = [
-  { name: 'Delivered', value: 85, color: '#22c55e' },
-  { name: 'Read', value: 10, color: '#3b82f6' },
-  { name: 'Failed', value: 5, color: '#ef4444' },
-];
-
 const StatCard = ({ title, value, change, icon: Icon, color }: any) => (
-  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+  <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-all hover:shadow-md">
     <div className="flex items-center justify-between mb-4">
       <div className={cn("p-3 rounded-xl", color)}>
         <Icon className="w-6 h-6" />
       </div>
       <div className={cn(
         "flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-lg",
-        change > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+        change >= 0 ? "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400" : "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
       )}>
-        {change > 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+        {change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
         {Math.abs(change)}%
       </div>
     </div>
-    <p className="text-gray-500 text-sm font-medium">{title}</p>
-    <h3 className="text-3xl font-bold text-gray-900 mt-1">{value}</h3>
+    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{title}</p>
+    <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</h3>
   </div>
 );
 
@@ -75,39 +50,43 @@ export function Analytics() {
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!profile?.orgId) return;
+    const fetchAnalytics = async () => {
+      if (!profile?.orgId) return;
 
-    const q = query(collection(db, 'organizations', profile.orgId, 'campaigns'));
-    const unsub = onSnapshot(q, (snapshot) => {
-      let reach = 0;
-      let delivered = 0;
-      let failed = 0;
-      let pending = 0;
-      const months: Record<string, any> = {};
+      try {
+        const res = await api.get('/campaigns');
+        const campaigns = res.data;
+        
+        let reach = 0;
+        let delivered = 0;
+        let failed = 0;
+        let pending = 0;
+        const months: Record<string, any> = {};
 
-      snapshot.docs.forEach(doc => {
-        const c = doc.data();
-        reach += c.stats.total || 0;
-        delivered += c.stats.delivered || 0;
-        failed += c.stats.failed || 0;
-        if (c.status === 'scheduled') pending += c.stats.total || 0;
+        campaigns.forEach((c: any) => {
+          reach += c.stats?.total || 0;
+          delivered += c.stats?.delivered || 0;
+          failed += c.stats?.failed || 0;
+          if (c.status === 'scheduled') pending += c.stats?.total || 0;
 
-        const date = new Date(c.createdAt);
-        const month = date.toLocaleString('default', { month: 'short' });
-        if (!months[month]) months[month] = { name: month, sms: 0, whatsapp: 0, voice: 0 };
-        months[month][c.type] = (months[month][c.type] || 0) + (c.stats.sent || 0);
-      });
+          const date = new Date(c.createdAt);
+          const month = date.toLocaleString('default', { month: 'short' });
+          if (!months[month]) months[month] = { name: month, sms: 0, whatsapp: 0, voice: 0 };
+          months[month][c.type] = (months[month][c.type] || 0) + (c.stats?.sent || 0);
+        });
 
-      setTotalReach(reach);
-      setDeliveryStats({ delivered, failed, pending });
-      
-      const sortedMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        .filter(m => months[m])
-        .map(m => months[m]);
-      setMonthlyData(sortedMonths.length > 0 ? sortedMonths : [{ name: 'No Data', sms: 0, whatsapp: 0, voice: 0 }]);
-    });
-
-    return () => unsub();
+        setTotalReach(reach);
+        setDeliveryStats({ delivered, failed, pending });
+        
+        const sortedMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+          .filter(m => months[m])
+          .map(m => months[m]);
+        setMonthlyData(sortedMonths.length > 0 ? sortedMonths : [{ name: 'No Data', sms: 0, whatsapp: 0, voice: 0 }]);
+      } catch (err) {
+        console.error('Analytics fetch error:', err);
+      }
+    };
+    fetchAnalytics();
   }, [profile]);
 
   const pieData = [
@@ -117,18 +96,18 @@ export function Analytics() {
   ].filter(d => d.value > 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-          <p className="text-gray-500 mt-1">Detailed performance metrics for your outreach campaigns.</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Analytics</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Detailed performance metrics for your outreach campaigns.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <Filter className="w-4 h-4" />
             <span>Filters</span>
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-lg">
             <Download className="w-4 h-4" />
             <span>Export Report</span>
           </button>
@@ -139,12 +118,11 @@ export function Analytics() {
         <StatCard title="Total Potential Reach" value={totalReach.toLocaleString()} change={0} icon={Users} color="bg-blue-50 text-blue-600" />
         <StatCard title="Messages Delivered" value={deliveryStats.delivered.toLocaleString()} change={0} icon={MessageSquare} color="bg-green-50 text-green-600" />
         <StatCard title="Failed Delivery" value={deliveryStats.failed.toLocaleString()} change={0} icon={AlertCircle} color="bg-red-50 text-red-600" />
-        {/* <StatCard title="Engagement Score" value="N/A" change={0} icon={TrendingUp} color="bg-orange-50 text-orange-600" /> */}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-8">Campaign Volume Over Time</h3>
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-8">Campaign Volume Over Time</h3>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={monthlyData}>
@@ -154,22 +132,21 @@ export function Analytics() {
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-gray-100 dark:text-gray-800" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
                 <Tooltip 
-                  contentStyle={{backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                  contentStyle={{backgroundColor: '#fff', borderRadius: '12px', border: 'none'}}
                 />
                 <Area type="monotone" dataKey="sms" stroke="#3b82f6" fillOpacity={1} fill="url(#colorSms)" strokeWidth={3} />
                 <Area type="monotone" dataKey="whatsapp" stroke="#22c55e" fillOpacity={0} strokeWidth={3} />
-                {/* <Area type="monotone" dataKey="voice" stroke="#a855f7" fillOpacity={0} strokeWidth={3} /> */}
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-8">Delivery Success Ratio</h3>
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-8">Delivery Success Ratio</h3>
           <div className="h-[350px] w-full flex items-center justify-center">
             {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -200,7 +177,7 @@ export function Analytics() {
             {pieData.map((item) => (
               <div key={item.name} className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full" style={{backgroundColor: item.color}} />
-                <span className="text-sm font-medium text-gray-600">{item.name} ({item.value})</span>
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{item.name} ({item.value})</span>
               </div>
             ))}
           </div>

@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Lock, ArrowRight, Apple, Chrome, Loader2, AlertCircle, Building2, Users, Shield, Link as LinkIcon, Eye, EyeOff } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Logo } from '../layout/Logo';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider
-} from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, addDoc, onSnapshot } from 'firebase/firestore';
-import { auth, db } from '../../lib/firebase';
+import api from '@/lib/api';
 
 interface AuthFormProps {
   type: 'login' | 'signup';
 }
 
-export function AuthForm({ type }: AuthFormProps) {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const inviteCode = searchParams.get('invite');
 
   const [email, setEmail] = useState('');
@@ -27,19 +19,10 @@ export function AuthForm({ type }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [systemConfig, setSystemConfig] = useState<any>(null);
+  const [systemConfig, setSystemConfig] = useState<any>({ registrationsEnabled: true });
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'system_configs', 'global'), (doc) => {
-      if (doc.exists()) {
-        setSystemConfig(doc.data());
-      }
-    });
-    return () => unsub();
-  }, []);
-
-  // If invite code changes in URL, update state
-  useEffect(() => {
+    // If invite code changes in URL, update state
     if (inviteCode && type === 'signup') {
       setSignupMode('join');
       setJoinCode(inviteCode);
@@ -52,112 +35,26 @@ export function AuthForm({ type }: AuthFormProps) {
     setError(null);
 
     try {
-      const isSuperAdminEmail = ['superadmin@outreach.com', 'superadmin@gmail.com'].includes(email.toLowerCase());
-
       if (type === 'signup') {
-        if (systemConfig?.registrationsEnabled === false && !isSuperAdminEmail) {
-          throw new Error('New registrations are currently autonomously disabled by the system administrator.');
-        }
-
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        let orgId: string | null = null;
-        let setupCompleted = false;
-        let role = isSuperAdminEmail ? 'superadmin' : 'owner';
-
-        if (isSuperAdminEmail) {
-          setupCompleted = true;
-          orgId = 'saas_platform_admin'; // Special org ID for SuperAdmin
-        } else if (signupMode === 'join') {
-          if (!joinCode) throw new Error('Join code is required');
-          const orgDoc = await getDoc(doc(db, 'organizations', joinCode));
-          if (!orgDoc.exists()) {
-            throw new Error('Invalid join code. Please check with your administrator.');
-          }
-          orgId = joinCode;
-          setupCompleted = true;
-          role = 'viewer';
-        }
+        const response = await api.post('/auth/register', {
+          email,
+          password,
+          displayName: email.split('@')[0],
+          inviteCode: signupMode === 'join' ? joinCode : undefined
+        });
         
-        // Create initial profile
-        await setDoc(doc(db, 'users', user.uid), {
-          id: user.uid,
-          email: user.email,
-          displayName: isSuperAdminEmail ? 'ReachOut Owner' : email.split('@')[0],
-          orgId: orgId,
-          role: role,
-          createdAt: Date.now(),
-          setupCompleted: setupCompleted,
-          isSuperAdmin: isSuperAdminEmail
-        });
-
-        // Autonomous logging
-        await addDoc(collection(db, 'system_logs'), {
-          message: isSuperAdminEmail ? 'SuperAdmin registered' : `New user registered: ${email}`,
-          type: 'auth',
-          userEmail: email,
-          timestamp: Date.now()
-        });
+        localStorage.setItem('token', response.data.token);
+        window.dispatchEvent(new Event('auth-change'));
+        navigate('/');
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const response = await api.post('/auth/login', { email, password });
+        localStorage.setItem('token', response.data.token);
+        window.dispatchEvent(new Event('auth-change'));
+        navigate('/');
       }
     } catch (err: any) {
       console.error('Auth error:', err);
-      let message = err.message || 'An error occurred during authentication';
-      
-      if (err.code === "auth/invalid-credential") {
-        message = "Invalid email or password. If you haven't created an account yet, please sign up first. Also ensure 'Email/Password' is enabled in your Firebase Console.";
-      } else if (err.code === "auth/operation-not-allowed") {
-        message = 'This sign-in method is disabled in the Firebase Console. Please enable it under Authentication > Sign-in method.';
-      } else if (err.code === 'auth/popup-blocked') {
-        message = 'The login popup was blocked. Please try opening the app in a new tab or use the Shared App URL.';
-      }
-      
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
-      const user = userCredential.user;
-
-      // Check if profile exists
-      const userDocRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
-      
-      if (!userDoc.exists()) {
-        // Create initial empty profile
-        await setDoc(userDocRef, {
-          id: user.uid,
-          email: user.email,
-          displayName: user.displayName || user.email?.split('@')[0] || 'User',
-          orgId: null,
-          role: 'owner',
-          createdAt: Date.now(),
-          setupCompleted: false
-        });
-      }
-
-    } catch (err: any) {
-      console.error('Google login error:', err);
-      let message = err.message || 'Google login failed';
-      
-      if (err.code === 'auth/operation-not-allowed') {
-        message = 'Google Login is not enabled in your Firebase Console. Please enable it under Authentication > Sign-in method.';
-      } else if (err.code === 'auth/popup-blocked') {
-        message = 'The login popup was blocked. Please try opening the app in a new tab or use the Shared App URL.';
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        message = 'Login popup was closed before completion.';
-      }
-      
-      setError(message);
+      setError(err.response?.data?.message || 'Authentication failed');
     } finally {
       setIsLoading(false);
     }

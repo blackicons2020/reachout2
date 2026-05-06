@@ -5,9 +5,19 @@ import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import { GoogleGenAI } from "@google/genai";
-import admin from 'firebase-admin';
 import { addMinutes, addDays, addWeeks, addMonths, isBefore, startOfDay, set } from 'date-fns';
 import { Resend } from 'resend';
+import jwt from 'jsonwebtoken';
+import dbConnect from './src/lib/db.ts';
+import User from './src/models/User.ts';
+import Organization from './src/models/Organization.ts';
+import Contact from './src/models/Contact.ts';
+import Campaign from './src/models/Campaign.ts';
+import Interaction from './src/models/Interaction.ts';
+import SystemLog from './src/models/SystemLog.ts';
+import { SystemConfig } from './src/models/SystemConfig.ts';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
 
 // Paystack Integration
 const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
@@ -15,42 +25,26 @@ const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import { getFirestore } from 'firebase-admin/firestore';
-
-// Initialize Firebase Admin
-import firebaseConfig from './firebase-applet-config.json' assert { type: 'json' };
-
-if (!admin.apps.length) {
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
-    ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) 
-    : null;
-
-  if (serviceAccount) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      databaseURL: `https://${serviceAccount.project_id}.firebaseio.com`
-    });
-    console.log('[Firebase] Initialized using FIREBASE_SERVICE_ACCOUNT env var');
-  } else {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      projectId: firebaseConfig.projectId,
-      databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`
-    });
-    console.log('[Firebase] Initialized using applicationDefault');
-  }
-}
-
-// Use the specific database ID if provided
-const firestore = firebaseConfig.firestoreDatabaseId 
-  ? getFirestore(firebaseConfig.firestoreDatabaseId)
-  : getFirestore();
-
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
 
   app.use(cors());
+  await dbConnect();
+
+  // Auth Middleware
+  const authenticate = async (req: any, res: any, next: any) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'No token provided' });
+
+    try {
+      const decoded: any = jwt.verify(token, JWT_SECRET);
+      req.userId = decoded.userId;
+      next();
+    } catch (error) {
+      res.status(401).json({ message: 'Invalid token' });
+    }
+  };
 
   // Paystack Webhook
   app.post('/api/billing/paystack-webhook', async (req, res) => {
@@ -74,7 +68,7 @@ async function startServer() {
 
         if (orgId) {
           try {
-            await firestore.collection('organizations').doc(orgId).update({
+            await Organization.findByIdAndUpdate(orgId, {
               'subscription.status': 'active',
               'subscription.paystackCustomerCode': customer.customer_code,
               'subscription.lastPaymentReference': reference,
@@ -82,7 +76,7 @@ async function startServer() {
             });
             console.log(`[Paystack Webhook] Updated subscription for org: ${orgId}`);
           } catch (error) {
-            console.error(`[Paystack Webhook] Firebase update error for org ${orgId}:`, error);
+            console.error(`[Paystack Webhook] MongoDB update error for org ${orgId}:`, error);
           }
         }
       }
@@ -100,7 +94,155 @@ async function startServer() {
 
   // API Routes
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok' });
+    res.json({ status: 'ok', database: 'mongodb' });
+  });
+
+  // Auth Routes
+  app.post('/api/auth/register', async (req, res) => {
+    const { email, password, displayName } = req.body;
+    try {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) return res.status(400).json({ message: 'User already exists' });
+
+      const user = new User({ email, password, displayName });
+      await user.save();
+
+      const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+      res.status(201).json({ token, user: { id: user._id, email: user.email, displayName: user.displayName, role: user.role } });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+      const user = await User.findOne({ email });
+      if (!user || !(await user.comparePassword(password))) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+      res.json({ token, user: { id: user._id, email: user.email, displayName: user.displayName, role: user.role, orgId: user.orgId } });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/auth/me', authenticate, async (req: any, res) => {
+    try {
+      const user = await User.findById(req.userId).populate('orgId');
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      res.json(user);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Organization Routes
+  app.post('/api/organizations', authenticate, async (req: any, res) => {
+    try {
+      const org = new Organization({ ...req.body, ownerId: req.userId });
+      await org.save();
+      await User.findByIdAndUpdate(req.userId, { orgId: org._id, role: 'owner', setupCompleted: true });
+      res.status(201).json(org);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/organizations/:id', authenticate, async (req, res) => {
+    try {
+      const org = await Organization.findById(req.params.id);
+      if (!org) return res.status(404).json({ message: 'Organization not found' });
+      res.json(org);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/organizations/:id', authenticate, async (req, res) => {
+    try {
+      const org = await Organization.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      res.json(org);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Contact Routes
+  app.get('/api/contacts', authenticate, async (req: any, res) => {
+    try {
+      const user = await User.findById(req.userId);
+      if (!user?.orgId) return res.status(400).json({ message: 'User has no organization' });
+      const contacts = await Contact.find({ orgId: user.orgId });
+      res.json(contacts);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/contacts', authenticate, async (req: any, res) => {
+    try {
+      const user = await User.findById(req.userId);
+      if (!user?.orgId) return res.status(400).json({ message: 'User has no organization' });
+      const contact = new Contact({ ...req.body, orgId: user.orgId });
+      await contact.save();
+      res.status(201).json(contact);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/contacts/:id', authenticate, async (req, res) => {
+    try {
+      const contact = await Contact.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      res.json(contact);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/contacts/:id', authenticate, async (req, res) => {
+    try {
+      await Contact.findByIdAndDelete(req.params.id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Campaign Routes
+  app.get('/api/campaigns', authenticate, async (req: any, res) => {
+    try {
+      const user = await User.findById(req.userId);
+      if (!user?.orgId) return res.status(400).json({ message: 'User has no organization' });
+      const campaigns = await Campaign.find({ orgId: user.orgId });
+      res.json(campaigns);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/campaigns', authenticate, async (req: any, res) => {
+    try {
+      const user = await User.findById(req.userId);
+      if (!user?.orgId) return res.status(400).json({ message: 'User has no organization' });
+      const campaign = new Campaign({ ...req.body, orgId: user.orgId });
+      await campaign.save();
+      res.status(201).json(campaign);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/campaigns/:id', authenticate, async (req, res) => {
+    try {
+      const campaign = await Campaign.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      res.json(campaign);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
   });
 
   // Paystack Transaction Verification
@@ -280,27 +422,21 @@ async function startServer() {
 
     try {
       // Find the organization that owns this number
-      const orgsSnapshot = await firestore.collection('organizations').get();
-      let targetOrg: any = null;
-      let targetTwilio: any = null;
+      const cleanTo = To.replace('whatsapp:', '');
+      const targetOrg = await Organization.findOne({
+        $or: [
+          { 'settings.twilio.smsFromNumber': cleanTo },
+          { 'settings.twilio.whatsappFromNumber': cleanTo }
+        ]
+      });
 
-      for (const doc of orgsSnapshot.docs) {
-        const data = doc.data();
-        const twilio = data.settings?.twilio || {};
-        const cleanTo = To.replace('whatsapp:', '');
-        
-        if (twilio.smsFromNumber === cleanTo || twilio.whatsappFromNumber === cleanTo) {
-          targetOrg = { id: doc.id, ...data };
-          targetTwilio = twilio;
-          break;
-        }
-      }
-
-      if (!targetOrg || !targetTwilio?.accountSid || !targetTwilio?.authToken) {
+      if (!targetOrg || !targetOrg.settings?.twilio?.accountSid || !targetOrg.settings?.twilio?.authToken) {
         console.warn(`[Webhook] No organization found for number ${To}. Sending generic response or ignoring.`);
         res.type('text/xml');
         return res.send(`<Response></Response>`);
       }
+
+      const targetTwilio = targetOrg.settings.twilio;
 
       // 1. Generate autonomous response using Gemini
       const prompt = `
@@ -348,29 +484,30 @@ async function startServer() {
   });
 
   // Endpoint to trigger a campaign immediately (used for "Send Now")
-  app.post('/api/outreach/trigger', async (req, res) => {
-    const { orgId, campaignId } = req.body;
-    if (!orgId || !campaignId) {
-      return res.status(400).json({ message: 'Missing orgId or campaignId' });
+  app.post('/api/outreach/trigger', authenticate, async (req: any, res) => {
+    const { campaignId } = req.body;
+    if (!campaignId) {
+      return res.status(400).json({ message: 'Missing campaignId' });
     }
 
     try {
+      const user = await User.findById(req.userId);
+      const orgId = user?.orgId;
+      if (!orgId) return res.status(400).json({ message: 'User has no organization' });
+
       console.log(`[API] Triggering campaign ${campaignId} for org ${orgId} immediate execution`);
       
-      const orgRef = firestore.collection('organizations').doc(orgId);
-      const campaignRef = orgRef.collection('campaigns').doc(campaignId);
-      const campaignDoc = await campaignRef.get();
+      const campaign = await Campaign.findOne({ _id: campaignId, orgId });
 
-      if (!campaignDoc.exists) {
+      if (!campaign) {
         console.error(`[API] Campaign ${campaignId} not found in org ${orgId}`);
         return res.status(404).json({ message: 'Campaign not found' });
       }
 
-      const campaign = campaignDoc.data();
-      console.log(`[API] Found campaign: ${campaign?.name}. Launching execution...`);
+      console.log(`[API] Found campaign: ${campaign.name}. Launching execution...`);
       
       // Run it in the background so we don't block the API response
-      executeCampaign(campaignRef, campaign).then(() => {
+      executeCampaign(campaign).then(() => {
         console.log(`[API] Execution FINISHED for campaign ${campaignId}`);
       }).catch(err => {
         console.error(`[API] Async execution error for ${campaignId}:`, err);
@@ -379,9 +516,6 @@ async function startServer() {
       res.json({ message: 'Campaign execution started' });
     } catch (error: any) {
       console.error('[API] Trigger Error:', error.message);
-      if (error.message.includes('not been used') || error.message.includes('permission')) {
-        return res.status(503).json({ message: 'Firebase services are initializing. Please try again in 30-60 seconds.' });
-      }
       res.status(500).json({ message: `Trigger failed: ${error.message}` });
     }
   });
@@ -412,37 +546,30 @@ async function startServer() {
     console.log(`[Scheduler] Checking for scheduled campaigns at ${new Date().toISOString()}...`);
     try {
       const now = Date.now();
-      
-      const orgsSnapshot = await firestore.collection('organizations').get();
-      
-      for (const orgDoc of orgsSnapshot.docs) {
-        const campaignsSnapshot = await orgDoc.ref.collection('campaigns').get();
+      const campaigns = await Campaign.find({
+        status: { $in: ['scheduled', 'sending', 'completed'] },
+      });
 
-        for (const campaignDoc of campaignsSnapshot.docs) {
-          const campaign = campaignDoc.data();
-          
-          if (!['scheduled', 'completed', 'sending'].includes(campaign.status)) continue;
-          
-          if (campaign.status === 'sending') {
-            const updatedAt = campaign.updatedAt || 0;
-            if (now - updatedAt > 10 * 60 * 1000) {
-              console.log(`[Scheduler] Retrying stuck campaign: ${campaign.name}`);
-            } else {
-              continue;
-            }
+      for (const campaign of campaigns) {
+        if (campaign.status === 'sending') {
+          const updatedAt = campaign.updatedAt || 0;
+          if (now - updatedAt > 10 * 60 * 1000) {
+            console.log(`[Scheduler] Retrying stuck campaign: ${campaign.name}`);
+          } else {
+            continue;
           }
+        }
 
-          let shouldRun = false;
-          if (campaign.status === 'scheduled' && campaign.scheduleAt && campaign.scheduleAt <= now) {
-            shouldRun = true;
-          } else if (campaign.recurring && campaign.recurring.nextRunAt && campaign.recurring.nextRunAt <= now) {
-            shouldRun = true;
-          }
+        let shouldRun = false;
+        if (campaign.status === 'scheduled' && campaign.scheduleAt && campaign.scheduleAt <= now) {
+          shouldRun = true;
+        } else if (campaign.recurring && campaign.recurring.nextRunAt && campaign.recurring.nextRunAt <= now) {
+          shouldRun = true;
+        }
 
-          if (shouldRun) {
-            console.log(`[Scheduler] Executing campaign: ${campaign.name} (${campaign.type}) in Org: ${orgDoc.id}`);
-            await executeCampaign(campaignDoc.ref, campaign);
-          }
+        if (shouldRun) {
+          console.log(`[Scheduler] Executing campaign: ${campaign.name} (${campaign.type}) in Org: ${campaign.orgId}`);
+          await executeCampaign(campaign);
         }
       }
     } catch (error) {
@@ -450,26 +577,23 @@ async function startServer() {
     }
   }
 
-  async function executeCampaign(campaignRef: admin.firestore.DocumentReference, campaign: any) {
+  async function executeCampaign(campaign: any) {
     try {
       // Update status to sending
-      await campaignRef.update({ status: 'sending', updatedAt: Date.now() });
+      campaign.status = 'sending';
+      campaign.updatedAt = Date.now();
+      await campaign.save();
 
       // Get settings from organization
-      const orgRef = campaignRef.parent.parent;
-      if (!orgRef) return;
-      
-      const orgDoc = await orgRef.get();
-      const orgData = orgDoc.data();
-      if (!orgData) return;
+      const org = await Organization.findById(campaign.orgId);
+      if (!org) return;
 
-      const settings = orgData.settings || {};
+      const settings = org.settings || {};
       const twilio = settings.twilio || {};
       const emailSettings = settings.email || {};
       
       // Get contacts
-      const contactsSnapshot = await orgRef.collection('contacts').get();
-      let targetContacts = contactsSnapshot.docs.map(d => d.data());
+      let targetContacts = await Contact.find({ orgId: org._id });
 
       if (campaign.targetGroups && !campaign.targetGroups.includes('All Contacts')) {
         targetContacts = targetContacts.filter(c => 
@@ -538,25 +662,23 @@ async function startServer() {
                  failedCount++;
                }
             } else {
-              console.error(`[Scheduler] Email configuration missing for Org: ${orgRef.id}`);
+              console.error(`[Scheduler] Email configuration missing for Org: ${org._id}`);
               failedCount++;
             }
-          } else if (campaign.type === 'voice') {
-            console.log(`[Scheduler] Voice campaign simulated for ${contact.phone}`);
-            sentCount++;
           }
 
           // Create interaction record
-          await orgRef.collection('interactions').add({
+          const interaction = new Interaction({
             contactId: contact.id || contact.phone || '',
-            campaignId: campaignRef.id,
-            orgId: orgRef.id,
+            campaignId: campaign._id,
+            orgId: org._id,
             type: campaign.type,
             status: 'sent',
             timestamp: Date.now(),
             content: message,
             direction: 'outbound'
           });
+          await interaction.save();
 
         } catch (err) {
           console.error(`[Scheduler] Failed to send to ${contact.phone}:`, err);
@@ -570,28 +692,27 @@ async function startServer() {
         nextRunAt = calculateNextRun(campaign.recurring, campaign.scheduleTimes || []);
       }
 
-      const updateData: any = {
-        'stats.total': targetContacts.length,
-        'stats.sent': sentCount,
-        'stats.delivered': sentCount,
-        'stats.failed': failedCount,
-        updatedAt: Date.now(),
-        lastRunAt: Date.now()
-      };
+      campaign.stats.sent += sentCount;
+      campaign.stats.delivered += sentCount;
+      campaign.stats.failed += failedCount;
+      campaign.updatedAt = Date.now();
+      campaign.lastRunAt = Date.now();
 
       if (nextRunAt) {
-        updateData.status = 'scheduled';
-        updateData['recurring.nextRunAt'] = nextRunAt;
+        campaign.status = 'scheduled';
+        campaign.recurring.nextRunAt = nextRunAt;
       } else {
-        updateData.status = 'completed';
+        campaign.status = 'completed';
       }
 
-      await campaignRef.update(updateData);
+      await campaign.save();
       console.log(`[Scheduler] Completed campaign ${campaign.name}. Sent: ${sentCount}, Failed: ${failedCount}`);
 
     } catch (error) {
-      console.error(`[Scheduler] Execution Error for ${campaignRef.id}:`, error);
-      await campaignRef.update({ status: 'failed', updatedAt: Date.now() });
+      console.error(`[Scheduler] Execution Error for ${campaign._id}:`, error);
+      campaign.status = 'failed';
+      campaign.updatedAt = Date.now();
+      await campaign.save();
     }
   }
 

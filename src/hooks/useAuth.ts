@@ -1,75 +1,72 @@
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import api from '../lib/api';
 import { UserProfile } from '../types';
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [organization, setOrganization] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Safety timeout to ensure loading doesn't hang forever
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn("Auth initialization timed out - forcing ready state");
-        setLoading(false);
-      }
-    }, 10000);
+  const fetchAuthData = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setUser(null);
+      setProfile(null);
+      setOrganization(null);
+      setLoading(false);
+      return;
+    }
 
-    let unsubProfile: (() => void) | undefined;
-    let unsubOrg: (() => void) | undefined;
-
-    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-      clearTimeout(timeout);
-      setUser(user);
+    try {
+      const response = await api.get('/auth/me');
+      const userData = response.data;
       
-      // Clear previous listeners
-      if (unsubProfile) unsubProfile();
-      if (unsubOrg) unsubOrg();
+      setUser({
+        uid: userData._id,
+        email: userData.email,
+        displayName: userData.displayName,
+      });
+      
+      setProfile({
+        id: userData._id,
+        email: userData.email,
+        orgId: userData.orgId?._id || userData.orgId || null,
+        role: userData.role,
+        displayName: userData.displayName,
+        photoURL: userData.photoURL,
+        setupCompleted: userData.setupCompleted,
+      });
 
-      if (user) {
-        // Listen to profile
-        unsubProfile = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
-          if (docSnap.exists()) {
-            const profileData = docSnap.data() as UserProfile;
-            setProfile(profileData);
-
-            // Listen to Organization
-            if (profileData.orgId) {
-              if (unsubOrg) unsubOrg();
-              unsubOrg = onSnapshot(doc(db, 'organizations', profileData.orgId), (orgSnap) => {
-                if (orgSnap.exists()) {
-                  setOrganization(orgSnap.data());
-                } else {
-                  setOrganization(null);
-                }
-              });
-            }
-          } else {
-            setProfile(null);
-          }
-          setLoading(false);
-        }, (error) => {
-          console.error("Profile listen error:", error);
-          setProfile(null);
-          setLoading(false);
-        });
+      if (userData.orgId) {
+        setOrganization(userData.orgId);
       } else {
-        setProfile(null);
         setOrganization(null);
-        setLoading(false);
       }
-    });
+    } catch (error) {
+      console.error('Auth error:', error);
+      localStorage.removeItem('token');
+      setUser(null);
+      setProfile(null);
+      setOrganization(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAuthData();
+
+    // Custom event for login/logout synchronization across tabs
+    const handleAuthChange = () => fetchAuthData();
+    window.addEventListener('storage', handleAuthChange);
+    window.addEventListener('auth-change', handleAuthChange);
 
     return () => {
-      unsubscribeAuth();
-      if (unsubProfile) unsubProfile();
-      if (unsubOrg) unsubOrg();
+      window.removeEventListener('storage', handleAuthChange);
+      window.removeEventListener('auth-change', handleAuthChange);
     };
   }, []);
 
-  return { user, profile, organization, loading };
+  return { user, profile, organization, loading, refreshAuth: fetchAuthData };
 }

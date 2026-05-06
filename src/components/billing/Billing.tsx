@@ -13,8 +13,7 @@ import {
 import { usePaystackPayment } from 'react-paystack';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc, onSnapshot, collection, addDoc } from 'firebase/firestore';
+import api from '@/lib/api';
 
 const STANDARD_PLANS = [
   {
@@ -147,30 +146,26 @@ const POLITICAL_PLANS = [
 ];
 
 export function Billing() {
-  const { user, profile, organization } = useAuth();
+  const { user, profile, organization, refreshAuth } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const [orgSettings, setOrgSettings] = useState<any>(null);
   const [contactCount, setContactCount] = useState(0);
 
   useEffect(() => {
-    if (profile?.orgId) {
-      const unsub = onSnapshot(doc(db, 'organizations', profile.orgId), (docSnap) => {
-        if (docSnap.exists()) {
-          setOrgSettings(docSnap.data().settings);
+    const fetchData = async () => {
+      if (profile?.orgId) {
+        try {
+          const [contactsRes] = await Promise.all([
+            api.get('/contacts'),
+          ]);
+          setContactCount(contactsRes.data.length);
+        } catch (err) {
+          console.error('Billing fetch error:', err);
         }
-      });
-
-      const unsubContacts = onSnapshot(collection(db, 'organizations', profile.orgId, 'contacts'), (snap) => {
-        setContactCount(snap.size);
-      });
-
-      return () => {
-        unsub();
-        unsubContacts();
-      };
-    }
+      }
+    };
+    fetchData();
   }, [profile]);
 
   const isPolitical = organization?.type === 'Political Organization';
@@ -225,13 +220,16 @@ export function Billing() {
     if (!profile?.orgId || !selectedPlan) return;
     
     try {
-      await updateDoc(doc(db, 'organizations', profile.orgId), {
-        'subscription.planId': selectedPlan.id,
-        'subscription.status': 'active',
-        'subscription.billingCycle': billingCycle,
-        'subscription.lastPaymentReference': reference.reference,
-        'subscription.updatedAt': Date.now()
+      await api.patch(`/organizations/${profile.orgId}`, {
+        subscription: {
+          planId: selectedPlan.id,
+          status: 'active',
+          billingCycle: billingCycle,
+          lastPaymentReference: reference.reference,
+          updatedAt: Date.now()
+        }
       });
+      await refreshAuth?.();
       window.location.href = window.location.pathname + '?success=true';
     } catch (err: any) {
       setError("Payment successful but failed to update status. Please contact support.");
@@ -262,31 +260,6 @@ export function Billing() {
     setSelectedPlan(plan);
     setError(null);
   };
-
-  useEffect(() => {
-    const success = new URLSearchParams(window.location.search).get('success') === 'true';
-    if (success && organization?.id && organization?.subscription?.status !== 'active') {
-      // Autonomously update subscription status in DB
-      const updateSubscription = async () => {
-        try {
-          await updateDoc(doc(db, 'organizations', organization.id), {
-            'subscription.status': 'active',
-            'subscription.updatedAt': Date.now()
-          });
-          
-          await addDoc(collection(db, 'system_logs'), {
-            message: `Subscription autonomously activated for ${organization.name}`,
-            type: 'billing',
-            userEmail: user?.email,
-            timestamp: Date.now()
-          });
-        } catch (error) {
-          console.error("Autonomous sync failed:", error);
-        }
-      };
-      updateSubscription();
-    }
-  }, [organization?.id, organization?.subscription?.status]);
 
   const isSuccess = new URLSearchParams(window.location.search).get('success') === 'true';
   const isCanceled = new URLSearchParams(window.location.search).get('canceled') === 'true';
@@ -338,7 +311,6 @@ export function Billing() {
             : "Scale your outreach with our flexible pricing plans. No hidden fees, cancel anytime."}
         </p>
 
-        {/* Cycle Toggle */}
         <div className="mt-8 flex items-center justify-center gap-4">
           <span className={cn("text-sm font-bold transition-colors", billingCycle === 'monthly' ? "text-gray-900 dark:text-white" : "text-gray-400")}>Monthly</span>
           <button 
@@ -447,21 +419,6 @@ export function Billing() {
             </button>
           </div>
         ))}
-      </div>
-
-      <div className="bg-gray-900 dark:bg-gray-950 rounded-3xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 border dark:border-gray-800">
-        <div className="flex items-center gap-6">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <CreditCard className="w-8 h-8" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold">Need more credits?</h3>
-            <p className="text-gray-400 mt-1">Purchase extra SMS or AI Voice minutes as you go.</p>
-          </div>
-        </div>
-        <button className="px-8 py-3 bg-white dark:bg-gray-800 dark:text-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-xl">
-          View Top-ups
-        </button>
       </div>
     </div>
   );
