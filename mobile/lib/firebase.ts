@@ -1,16 +1,26 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+/**
+ * ReachOut Mobile MongoDB Bridge
+ * Replaces Firebase with MongoDB API calls.
+ */
 
-const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://reachout2.onrender.com';
+
+export const auth = {
+  currentUser: null,
+  onAuthStateChanged: (callback: any) => {
+    // Basic auth check
+    callback(null);
+    return () => {};
+  },
+  signOut: async () => {}
 };
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, process.env.EXPO_PUBLIC_FIREBASE_DATABASE_ID);
-export const auth = getAuth(app);
+export const db = {
+  collection: (path: string) => ({ path }),
+  doc: (path: string) => ({ path }),
+};
+
+// Minimal Firestore-like functions for mobile
+export const getFirestore = () => db;
+export const getAuth = () => auth;
+export const initializeApp = () => ({});

@@ -17,21 +17,17 @@ import { generateId, cn } from './lib/utils';
 import { MessageSquare, Phone, Send, Edit2, Trash2, X, Copy, AlertCircle, CheckCircle2, Loader2, Shield, Activity, Mail, Layers, MessageCircle } from 'lucide-react';
 import { outreachService } from './services/outreachService';
 import { 
-  collection, 
-  query, 
   onSnapshot, 
-  doc, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
-  where, 
-  orderBy, 
   getDoc,
   setDoc,
   writeBatch
-} from 'firebase/firestore';
+} from './lib/db';
 import { db, auth } from './lib/firebase';
-import { signOut } from 'firebase/auth';
+const { collection, query, doc, where, orderBy } = db as any;
+const signOut = auth.signOut;
 import Reports from './components/reports/Reports';
 import CallLogs from './components/reports/CallLogs';
 import Members from './components/organization/Members';

@@ -1,74 +1,50 @@
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { onSnapshot, doc } from '../lib/db';
 import { auth, db } from '../lib/firebase';
 import { UserProfile } from '../types';
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [organization, setOrganization] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Safety timeout to ensure loading doesn't hang forever
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn("Auth initialization timed out - forcing ready state");
-        setLoading(false);
-      }
-    }, 10000);
-
-    let unsubProfile: (() => void) | undefined;
-    let unsubOrg: (() => void) | undefined;
-
-    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-      clearTimeout(timeout);
-      setUser(user);
+    // Polling check for auth state since we don't have onAuthStateChanged
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      const userData = JSON.parse(localStorage.getItem('user') || 'null');
       
-      // Clear previous listeners
-      if (unsubProfile) unsubProfile();
-      if (unsubOrg) unsubOrg();
-
-      if (user) {
-        // Listen to profile
-        unsubProfile = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+      if (token && userData) {
+        setUser(userData);
+        
+        // Fetch/Listen to profile and org
+        const unsubProfile = onSnapshot(doc(db, 'users', userData.id), (docSnap) => {
           if (docSnap.exists()) {
             const profileData = docSnap.data() as UserProfile;
             setProfile(profileData);
 
-            // Listen to Organization
             if (profileData.orgId) {
-              if (unsubOrg) unsubOrg();
-              unsubOrg = onSnapshot(doc(db, 'organizations', profileData.orgId), (orgSnap) => {
+              onSnapshot(doc(db, 'organizations', profileData.orgId), (orgSnap) => {
                 if (orgSnap.exists()) {
                   setOrganization(orgSnap.data());
-                } else {
-                  setOrganization(null);
                 }
               });
             }
-          } else {
-            setProfile(null);
           }
           setLoading(false);
-        }, (error) => {
-          console.error("Profile listen error:", error);
-          setProfile(null);
-          setLoading(false);
         });
+
+        return () => unsubProfile();
       } else {
+        setUser(null);
         setProfile(null);
         setOrganization(null);
         setLoading(false);
       }
-    });
-
-    return () => {
-      unsubscribeAuth();
-      if (unsubProfile) unsubProfile();
-      if (unsubOrg) unsubOrg();
     };
+
+    checkAuth();
   }, []);
 
   return { user, profile, organization, loading };

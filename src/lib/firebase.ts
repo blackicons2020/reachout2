@@ -1,14 +1,31 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+/**
+ * ReachOut Firebase Replacement
+ * This file replaces the original firebase.ts and redirects to our MongoDB Bridge.
+ */
 
-const app = initializeApp(firebaseConfig);
-console.log("Firebase App Initialized");
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-console.log("Firestore Initialized");
-export const auth = getAuth(app);
-console.log("Auth Initialized");
+import { db as mongoDb } from './db';
+
+// Mock Auth Object
+export const auth = {
+  get currentUser() {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) return null;
+    return {
+      uid: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      tenantId: null,
+      providerData: []
+    };
+  },
+  signOut: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  }
+};
+
+export const db = mongoDb;
 
 export enum OperationType {
   CREATE = 'create',
@@ -19,42 +36,10 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId?: string | null;
-    email?: string | null;
-    emailVerified?: boolean | null;
-    isAnonymous?: boolean | null;
-    tenantId?: string | null;
-    providerInfo?: {
-      providerId?: string | null;
-      email?: string | null;
-    }[];
-  }
-}
-
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData?.map(provider => ({
-        providerId: provider.providerId,
-        email: provider.email,
-      })) || []
-    },
-    operationType,
-    path
-  }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.error('Database Error: ', error);
+  throw error;
 }
 
+const app = { name: 'MongoDB-Bridge' };
 export default app;
