@@ -62,7 +62,9 @@ export function useAuth() {
       }
     };
 
+    window.addEventListener('auth-change', checkAuth);
     checkAuth();
+    return () => window.removeEventListener('auth-change', checkAuth);
   }, []);
 
   return { user, profile, organization, loading };

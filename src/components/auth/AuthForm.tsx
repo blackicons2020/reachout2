@@ -55,6 +55,7 @@ export function AuthForm({ type }: AuthFormProps) {
       // Store token and user
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      window.dispatchEvent(new Event('auth-change'));
 
       // Redirect
       navigate('/');
