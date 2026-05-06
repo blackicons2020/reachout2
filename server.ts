@@ -8,7 +8,7 @@ import { GoogleGenAI } from "@google/genai";
 import { addMinutes, addDays, addWeeks, addMonths, isBefore, startOfDay, set } from 'date-fns';
 import { Resend } from 'resend';
 import jwt from 'jsonwebtoken';
-import dbConnect from './src/lib/db';
+import mongoose from 'mongoose';
 import User from './src/models/User';
 import Organization from './src/models/Organization';
 import Contact from './src/models/Contact';
@@ -17,7 +17,32 @@ import Interaction from './src/models/Interaction';
 import SystemLog from './src/models/SystemLog';
 import { SystemConfig } from './src/models/SystemConfig';
 
+const MONGODB_URI = process.env.MONGODB_URI || '';
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
+
+// Global DB Cache for Vercel
+let cached = (global as any).mongoose;
+if (!cached) {
+  cached = (global as any).mongoose = { conn: null, promise: null };
+}
+
+async function dbConnect() {
+  if (cached.conn) return cached.conn;
+  if (!cached.promise) {
+    const opts = { bufferCommands: false };
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log('Connected to MongoDB');
+      return mongoose;
+    });
+  }
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+  return cached.conn;
+}
 
 // Paystack Integration
 const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
@@ -34,11 +59,11 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// Initialize Database (don't await at top level to avoid Vercel timeouts)
-dbConnect().catch(err => console.error('Initial DB connection error:', err));
-
 // Database connection middleware for safety
 const ensureDb = async (req: any, res: any, next: any) => {
+  if (!MONGODB_URI) {
+    return res.status(500).json({ message: 'MONGODB_URI is not defined in environment variables' });
+  }
   try {
     await dbConnect();
     next();
