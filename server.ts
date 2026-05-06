@@ -25,10 +25,11 @@ const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function startServer() {
-  const app = express();
-  const PORT = process.env.PORT || 3000;
+export const app = express();
+const PORT = process.env.PORT || 3000;
+const isVercel = process.env.VERCEL === '1';
 
+async function startServer() {
   app.use(cors());
   await dbConnect();
 
@@ -94,7 +95,16 @@ async function startServer() {
 
   // API Routes
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', database: 'mongodb' });
+    res.json({ status: 'ok', database: 'mongodb', env: isVercel ? 'vercel' : 'local' });
+  });
+
+  // Vercel Cron Trigger
+  app.get('/api/cron/scheduler', async (req, res) => {
+    // Basic protection - in production use a secret header check
+    // if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) { ... }
+    console.log('[Cron] Manual scheduler trigger via API');
+    await runScheduler();
+    res.json({ status: 'success', message: 'Scheduler triggered' });
   });
 
   // Auth Routes
@@ -821,9 +831,17 @@ async function startServer() {
     return null;
   }
 
-  // Start the background interval
-  setInterval(runScheduler, SCHEDULER_INTERVAL);
-  runScheduler(); // Initial run
+  // Start the background interval ONLY if not on Vercel
+  // Vercel uses Cron Jobs to trigger the scheduler instead of setInterval
+  if (!isVercel) {
+    setInterval(runScheduler, SCHEDULER_INTERVAL);
+    runScheduler(); // Initial run
+    
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  }
 }
 
 startServer();
+export default app;

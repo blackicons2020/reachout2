@@ -8,7 +8,8 @@ import api from '@/lib/api';
 interface AuthFormProps {
   type: 'login' | 'signup';
 }
-
+export function AuthForm({ type }: AuthFormProps) {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const inviteCode = searchParams.get('invite');
 
