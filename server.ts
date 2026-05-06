@@ -157,6 +157,7 @@ async function startServer() {
   // --- Auth Routes ---
 
   app.post('/api/auth/register', async (req, res) => {
+    console.log(`[Auth] Register attempt: ${req.body.email}`);
     try {
       const { email, password, name, orgName, industry } = req.body;
       
@@ -192,6 +193,7 @@ async function startServer() {
   });
 
   app.post('/api/auth/login', async (req, res) => {
+    console.log(`[Auth] Login attempt: ${req.body.email}`);
     try {
       const { email, password } = req.body;
       const user = await User.findOne({ email });
