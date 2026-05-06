@@ -148,6 +148,10 @@ async function startServer() {
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(bodyParser.json());
 
+  // Serve static files from the 'dist' directory
+  const __dirname = path.resolve();
+  app.use(express.static(path.join(__dirname, 'dist')));
+
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
   // --- Auth Routes ---
@@ -480,6 +484,12 @@ async function startServer() {
       return false;
     }
   };
+
+  // SPA Fallback: Any route that doesn't match an API route or static file
+  // should serve index.html
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(path.resolve(), 'dist', 'index.html'));
+  });
 
   setInterval(runScheduler, 60000);
 }
