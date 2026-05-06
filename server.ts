@@ -247,91 +247,61 @@ async function startServer() {
   });
 
   // --- Data Routes ---
-
-  app.get('/api/data/:collection', authenticateToken, async (req: any, res) => {
+  const dataHandler = async (req: any, res: any) => {
     try {
-      const { collection } = req.params;
+      const collection = req.params.collection;
+      const id = req.params.id;
       const orgId = req.user.orgId;
       
-      let data;
-      if (collection === 'contacts') data = await Contact.find({ orgId }).sort({ createdAt: -1 });
-      else if (collection === 'campaigns') data = await Campaign.find({ orgId }).sort({ createdAt: -1 });
-      else if (collection === 'organizations') data = await Organization.findById(orgId);
-      else if (collection === 'users') data = await User.find({ orgId });
-      else return res.status(404).json({ message: 'Collection not found' });
-
-      res.json(data);
+      if (req.method === 'GET') {
+        if (id) {
+          let data;
+          if (collection === 'organizations' && id === 'members') data = await User.find({ orgId });
+          else if (collection === 'contacts') data = await Contact.findOne({ _id: id, orgId });
+          else if (collection === 'campaigns') data = await Campaign.findOne({ _id: id, orgId });
+          else if (collection === 'organizations') data = await Organization.findById(id || orgId);
+          else if (collection === 'users') data = await User.findById(id);
+          else return res.status(404).json({ message: 'Collection not found' });
+          return res.json(data);
+        } else {
+          let data;
+          if (collection === 'contacts') data = await Contact.find({ orgId }).sort({ createdAt: -1 });
+          else if (collection === 'campaigns') data = await Campaign.find({ orgId }).sort({ createdAt: -1 });
+          else if (collection === 'organizations') data = await Organization.findById(orgId);
+          else if (collection === 'users') data = await User.find({ orgId });
+          else if (collection === 'members') data = await User.find({ orgId }); // Special case for members
+          else return res.status(404).json({ message: 'Collection not found' });
+          return res.json(data);
+        }
+      } else if (req.method === 'POST') {
+        let item;
+        if (collection === 'contacts') item = new Contact({ ...req.body, orgId });
+        else if (collection === 'campaigns') item = new Campaign({ ...req.body, orgId });
+        else return res.status(404).json({ message: 'Collection not found' });
+        await item.save();
+        return res.status(201).json(item);
+      } else if (req.method === 'PATCH') {
+        let item;
+        if (collection === 'contacts') item = await Contact.findOneAndUpdate({ _id: id, orgId }, req.body, { new: true });
+        else if (collection === 'campaigns') item = await Campaign.findOneAndUpdate({ _id: id, orgId }, req.body, { new: true });
+        else if (collection === 'organizations') item = await Organization.findOneAndUpdate({ _id: orgId }, req.body, { new: true });
+        else return res.status(404).json({ message: 'Collection not found' });
+        return res.json(item);
+      } else if (req.method === 'DELETE') {
+        if (collection === 'contacts') await Contact.findOneAndDelete({ _id: id, orgId });
+        else if (collection === 'campaigns') await Campaign.findOneAndDelete({ _id: id, orgId });
+        else return res.status(404).json({ message: 'Collection not found' });
+        return res.sendStatus(204);
+      }
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
-  });
+  };
 
-  app.get('/api/data/:collection/:id', authenticateToken, async (req: any, res) => {
-    try {
-      const { collection, id } = req.params;
-      const orgId = req.user.orgId;
-      
-      let data;
-      if (collection === 'contacts') data = await Contact.findOne({ _id: id, orgId });
-      else if (collection === 'campaigns') data = await Campaign.findOne({ _id: id, orgId });
-      else if (collection === 'organizations') data = await Organization.findById(id || orgId);
-      else if (collection === 'users') data = await User.findById(id);
-      else return res.status(404).json({ message: 'Collection not found' });
-
-      res.json(data);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-
-  app.post('/api/data/:collection', authenticateToken, async (req: any, res) => {
-    try {
-      const { collection } = req.params;
-      const orgId = req.user.orgId;
-      
-      let item;
-      if (collection === 'contacts') item = new Contact({ ...req.body, orgId });
-      else if (collection === 'campaigns') item = new Campaign({ ...req.body, orgId });
-      else return res.status(404).json({ message: 'Collection not found' });
-
-      await item.save();
-      res.status(201).json(item);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-
-  app.patch('/api/data/:collection/:id', authenticateToken, async (req: any, res) => {
-    try {
-      const { collection, id } = req.params;
-      const orgId = req.user.orgId;
-      
-      let item;
-      if (collection === 'contacts') item = await Contact.findOneAndUpdate({ _id: id, orgId }, req.body, { new: true });
-      else if (collection === 'campaigns') item = await Campaign.findOneAndUpdate({ _id: id, orgId }, req.body, { new: true });
-      else if (collection === 'organizations') item = await Organization.findOneAndUpdate({ _id: orgId }, req.body, { new: true });
-      else return res.status(404).json({ message: 'Collection not found' });
-
-      res.json(item);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-
-  app.delete('/api/data/:collection/:id', authenticateToken, async (req: any, res) => {
-    try {
-      const { collection, id } = req.params;
-      const orgId = req.user.orgId;
-      
-      if (collection === 'contacts') await Contact.findOneAndDelete({ _id: id, orgId });
-      else if (collection === 'campaigns') await Campaign.findOneAndDelete({ _id: id, orgId });
-      else return res.status(404).json({ message: 'Collection not found' });
-
-      res.sendStatus(204);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
-    }
-  });
+  app.all('/api/data/:collection', authenticateToken, dataHandler);
+  app.all('/api/data/:collection/:id', authenticateToken, dataHandler);
+  app.all('/api/:collection', authenticateToken, dataHandler);
+  app.all('/api/:collection/:id', authenticateToken, dataHandler);
 
   // --- Outreach Trigger ---
 
