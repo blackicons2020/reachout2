@@ -61,7 +61,7 @@ export function AuthForm({ type }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#0b0e14] p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <Logo className="w-8 h-8 mx-auto shadow-xl shadow-blue-200 dark:shadow-none mb-6" size={32} />
@@ -86,19 +86,19 @@ export function AuthForm({ type }: AuthFormProps) {
             {type === 'signup' && (
               <div className="space-y-6">
                 {/* Registration Type Selection */}
-                <div className="p-4 bg-gray-50 dark:bg-slate-950/50 rounded-2xl border border-gray-100 dark:border-gray-800/50">
-                  <label className="block text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-[0.2em] text-center mb-4">
+                <div className="p-5 bg-slate-900/40 dark:bg-slate-950/50 rounded-2xl border border-white/5 dark:border-white/5">
+                  <label className="block text-[10px] font-black text-blue-400 uppercase tracking-[0.25em] text-center mb-5">
                     Registration Type
                   </label>
-                  <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100/50 dark:bg-gray-900/50 rounded-xl">
+                  <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-950/30 rounded-xl border border-white/5">
                     <button
                       type="button"
                       onClick={() => setSignupMode('create')}
                       className={cn(
-                        "flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg transition-all text-xs font-bold",
+                        "flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-all text-[11px] font-bold uppercase tracking-wider",
                         signupMode === 'create'
-                          ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm border border-gray-100 dark:border-gray-700"
-                          : "text-gray-500 hover:bg-white/50 dark:hover:bg-gray-800/50"
+                          ? "bg-slate-800 text-blue-400 shadow-lg border border-white/10"
+                          : "text-slate-500 hover:bg-white/5"
                       )}
                     >
                       <Building2 className="w-4 h-4" />
@@ -108,10 +108,10 @@ export function AuthForm({ type }: AuthFormProps) {
                       type="button"
                       onClick={() => setSignupMode('join')}
                       className={cn(
-                        "flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg transition-all text-xs font-bold",
+                        "flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-all text-[11px] font-bold uppercase tracking-wider",
                         signupMode === 'join'
-                          ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm border border-gray-100 dark:border-gray-700"
-                          : "text-gray-500 hover:bg-white/50 dark:hover:bg-gray-800/50"
+                          ? "bg-slate-800 text-blue-400 shadow-lg border border-white/10"
+                          : "text-slate-500 hover:bg-white/5"
                       )}
                     >
                       <Users className="w-4 h-4" />
@@ -120,46 +120,16 @@ export function AuthForm({ type }: AuthFormProps) {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">Full Name</label>
-                  <div className="relative">
-                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input 
-                      type="text"
-                      required
-                      placeholder="John Doe"
-                      className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                {signupMode === 'create' ? (
+                {signupMode === 'join' && (
                   <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                    <label className="text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">Organization Name</label>
-                    <div className="relative">
-                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input 
-                        type="text"
-                        required
-                        placeholder="My Company Ltd"
-                        className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
-                        value={orgName}
-                        onChange={(e) => setOrgName(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                    <label className="text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">Invite Code</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Invite Code</label>
                     <div className="relative">
                       <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <input 
                         type="text"
                         required
                         placeholder="ORG-123-ABC"
-                        className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                        className="w-full pl-12 pr-4 py-4 bg-blue-50/50 dark:bg-slate-950/50 border border-gray-200 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium"
                         value={joinCode}
                         onChange={(e) => setJoinCode(e.target.value)}
                       />
@@ -170,14 +140,14 @@ export function AuthForm({ type }: AuthFormProps) {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">Email Address</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input 
                   type="email"
                   required
                   placeholder="name@company.com"
-                  className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                  className="w-full pl-12 pr-4 py-4 bg-blue-50/50 dark:bg-slate-950/50 border border-gray-200 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -185,14 +155,14 @@ export function AuthForm({ type }: AuthFormProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">Password</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input 
                   type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-12 py-3 bg-white dark:bg-slate-950 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                  className="w-full pl-12 pr-12 py-4 bg-blue-50/50 dark:bg-slate-950/50 border border-gray-200 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
