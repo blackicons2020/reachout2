@@ -219,6 +219,33 @@ async function startServer() {
     }
   });
 
+  app.post('/api/organizations', authenticateToken, async (req: any, res) => {
+    console.log(`[Org] Setup attempt for user: ${req.user.userId}`);
+    try {
+      const { name, type, industry, state, city, email, phone } = req.body;
+      
+      const organization = new Organization({
+        name,
+        type: type || 'business',
+        industry: industry || type || 'Other',
+        country: state, // Using state as country for now or adjust model
+        settings: {
+          email: { fromEmail: email, fromName: name }
+        }
+      });
+      await organization.save();
+      
+      await User.findByIdAndUpdate(req.user.userId, {
+        orgId: organization._id,
+        setupCompleted: true
+      });
+      
+      res.status(201).json(organization);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // --- Data Routes ---
 
   app.get('/api/data/:collection', authenticateToken, async (req: any, res) => {

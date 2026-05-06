@@ -70,22 +70,22 @@ export function CompleteProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4 py-12">
-      <div className="w-full max-w-2xl space-y-8">
+    <div className="min-h-screen bg-[#0b0e14] flex items-center justify-center p-4 py-8">
+      <div className="w-full max-w-xl space-y-6">
         <div className="text-center">
-          <Logo className="w-16 h-16 mx-auto shadow-xl shadow-blue-200 dark:shadow-none mb-6" size={64} />
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Complete Your Profile</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">Let's set up your organization to get started with ReachOut</p>
+          <Logo className="w-10 h-10 mx-auto mb-4" size={40} />
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Complete Your Profile</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Set up your organization to get started</p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-100 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-100 dark:border-gray-800">
           {error && (
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm font-bold animate-in fade-in slide-in-from-top-2">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Org Type */}
               <div className="space-y-2">
@@ -95,7 +95,7 @@ export function CompleteProfile() {
                 </label>
                 <select
                   required
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 >
@@ -116,7 +116,7 @@ export function CompleteProfile() {
                   type="text"
                   required
                   placeholder="e.g. Grace Foundation"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
@@ -132,7 +132,7 @@ export function CompleteProfile() {
                   type="text"
                   required
                   placeholder="e.g. California"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                 />
@@ -148,7 +148,7 @@ export function CompleteProfile() {
                   type="text"
                   required
                   placeholder="e.g. San Francisco"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 />
@@ -164,7 +164,7 @@ export function CompleteProfile() {
                   type="email"
                   required
                   placeholder="contact@org.com"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
@@ -180,7 +180,7 @@ export function CompleteProfile() {
                   type="tel"
                   required
                   placeholder="+1 (555) 000-0000"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
@@ -190,7 +190,7 @@ export function CompleteProfile() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 dark:shadow-none flex items-center justify-center gap-3 group disabled:opacity-50 mt-8"
+              className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 dark:shadow-none flex items-center justify-center gap-3 group disabled:opacity-50 mt-4"
             >
               {isLoading ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
