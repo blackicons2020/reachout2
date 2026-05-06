@@ -4,9 +4,9 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 
-// Import Models (Removing .ts extensions for Vercel)
-import User from './src/models/User';
-import Organization from './src/models/Organization';
+// Import Models with explicit .js extensions for Vercel ESM resolution
+import User from './src/models/User.js';
+import Organization from './src/models/Organization.js';
 
 const MONGODB_URI = process.env.MONGODB_URI || '';
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
@@ -22,8 +22,16 @@ if (!cached) cached = (global as any).mongoose = { conn: null, promise: null };
 async function dbConnect() {
   if (cached.conn) return cached.conn;
   if (!cached.promise) {
-    const opts = { bufferCommands: false, serverSelectionTimeoutMS: 5000 };
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then(m => m);
+    const opts = { 
+      bufferCommands: false, 
+      serverSelectionTimeoutMS: 10000, // 10 seconds
+      connectTimeoutMS: 10000
+    };
+    console.log('Attempting MongoDB connection...');
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then(m => {
+      console.log('MongoDB connected successfully');
+      return m;
+    });
   }
   try {
     cached.conn = await cached.promise;
@@ -35,17 +43,26 @@ async function dbConnect() {
 }
 
 const ensureDb = async (req: any, res: any, next: any) => {
-  if (!MONGODB_URI) return res.status(500).json({ message: 'MONGODB_URI missing' });
+  if (!MONGODB_URI) return res.status(500).json({ message: 'Environment Variable MONGODB_URI is missing in Vercel' });
   try {
     await dbConnect();
     next();
   } catch (err: any) {
-    res.status(500).json({ message: `DB Connection Error: ${err.message}` });
+    console.error('DB Connection error:', err.message);
+    res.status(500).json({ 
+      error: 'Database Connection Failed',
+      reason: err.message,
+      tip: 'Check if your MongoDB Atlas IP Whitelist allows access from everywhere (0.0.0.0/0)'
+    });
   }
 };
 
 app.get('/api/health', ensureDb, (req, res) => {
-  res.json({ status: 'ok', database: 'connected' });
+  res.json({ 
+    status: 'ok', 
+    database: 'connected',
+    env: process.env.VERCEL ? 'production' : 'development'
+  });
 });
 
 app.post('/api/auth/register', ensureDb, async (req, res) => {
@@ -63,7 +80,5 @@ app.post('/api/auth/register', ensureDb, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
-// Add back more routes later once this is verified...
 
 export default app;
