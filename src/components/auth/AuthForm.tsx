@@ -31,7 +31,13 @@ export function AuthForm({ type }: AuthFormProps) {
     try {
       const endpoint = type === 'signup' ? '/api/auth/register' : '/api/auth/login';
       const body = type === 'signup' 
-        ? { email, password, name, orgName: signupMode === 'create' ? orgName : undefined, joinCode: signupMode === 'join' ? joinCode : undefined }
+        ? { 
+            email, 
+            password, 
+            name: name || email.split('@')[0], 
+            orgName: signupMode === 'create' ? (orgName || 'My Organization') : undefined, 
+            joinCode: signupMode === 'join' ? joinCode : undefined 
+          }
         : { email, password };
 
       const response = await fetch(endpoint, {
@@ -62,10 +68,10 @@ export function AuthForm({ type }: AuthFormProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0b0e14] p-4">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-[360px] space-y-6">
         <div className="text-center">
-          <Logo className="w-8 h-8 mx-auto shadow-xl shadow-blue-200 dark:shadow-none mb-6" size={32} />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <Logo className="w-8 h-8 mx-auto mb-4" size={32} />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
             {type === 'login' ? 'Welcome back' : 'Create your account'}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
@@ -75,7 +81,7 @@ export function AuthForm({ type }: AuthFormProps) {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-100 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-100 dark:border-gray-800">
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3 text-red-600 animate-in fade-in slide-in-from-top-2">
               <AlertCircle className="w-5 h-5 shrink-0" />
@@ -179,7 +185,7 @@ export function AuthForm({ type }: AuthFormProps) {
             <button 
               type="submit"
               disabled={isLoading}
-              className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 group disabled:opacity-50"
+              className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

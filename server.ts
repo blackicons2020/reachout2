@@ -178,7 +178,7 @@ async function startServer() {
         displayName: name,
         orgId: organization._id,
         role: 'owner',
-        setupCompleted: true
+        setupCompleted: false
       });
       await user.save();
 
