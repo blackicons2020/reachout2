@@ -25,27 +25,28 @@ const fetchAPI = async (endpoint: string, options: any = {}) => {
   return response.json();
 };
 
+export const collection = (dbInstance: any, ...path: string[]) => {
+  return { path: path.join('/') };
+};
+
+export const doc = (dbInstance: any, ...path: string[]) => {
+  return { path: path.join('/') };
+};
+
+export const query = (collectionRef: any, ...constraints: any[]) => {
+  return { path: collectionRef.path, constraints };
+};
+
+export const orderBy = (field: string, direction: string = 'asc') => ({ type: 'orderBy', field, direction });
+
+export const where = (field: string, op: string, value: any) => ({ type: 'where', field, op, value });
+
 export const db = {
-  // Collection emulation
-  collection: (dbInstance: any, ...path: string[]) => {
-    return { path: path.join('/') };
-  },
-  
-  // Doc emulation
-  doc: (dbInstance: any, ...path: string[]) => {
-    return { path: path.join('/') };
-  },
-  
-  // Query emulation
-  query: (collectionRef: any, ...constraints: any[]) => {
-    return { path: collectionRef.path, constraints };
-  },
-  
-  // OrderBy emulation (ignored for now as backend handles it)
-  orderBy: (field: string, direction: string = 'asc') => ({ type: 'orderBy', field, direction }),
-  
-  // Where emulation (ignored for now as backend handles it)
-  where: (field: string, op: string, value: any) => ({ type: 'where', field, op, value }),
+  collection,
+  doc,
+  query,
+  orderBy,
+  where,
 };
 
 // Snapshot listener emulation (polling for simplicity)
