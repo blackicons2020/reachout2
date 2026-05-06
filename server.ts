@@ -29,86 +29,96 @@ export const app = express();
 const PORT = process.env.PORT || 3000;
 const isVercel = process.env.VERCEL === '1';
 
-async function startServer() {
-  app.use(cors());
-  await dbConnect();
+// Standard Middlewares
+app.use(cors());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-  // Auth Middleware
-  const authenticate = async (req: any, res: any, next: any) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ message: 'No token provided' });
+// Initialize Database (don't await at top level to avoid Vercel timeouts)
+dbConnect().catch(err => console.error('Initial DB connection error:', err));
 
-    try {
-      const decoded: any = jwt.verify(token, JWT_SECRET);
-      req.userId = decoded.userId;
-      next();
-    } catch (error) {
-      res.status(401).json({ message: 'Invalid token' });
-    }
-  };
+// Database connection middleware for safety
+const ensureDb = async (req: any, res: any, next: any) => {
+  try {
+    await dbConnect();
+    next();
+  } catch (err: any) {
+    res.status(500).json({ message: 'Database connection failed' });
+  }
+};
 
-  // Paystack Webhook
-  app.post('/api/billing/paystack-webhook', async (req, res) => {
-    const crypto = await import('crypto');
-    const secret = process.env.PAYSTACK_SECRET_KEY;
-    
-    if (!secret) {
-      console.error('[Paystack Webhook] Secret key not configured');
-      return res.status(500).send('Webhook secret not configured');
-    }
+// Auth Middleware
+const authenticate = async (req: any, res: any, next: any) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'No token provided' });
 
-    const hash = crypto.createHmac('sha512', secret).update(JSON.stringify(req.body)).digest('hex');
-    
-    if (hash === req.headers['x-paystack-signature']) {
-      const event = req.body;
-      console.log('[Paystack Webhook] Received:', event.event);
+  try {
+    const decoded: any = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+};
 
-      if (event.event === 'charge.success') {
-        const { reference, customer, metadata } = event.data;
-        const orgId = metadata?.orgId || metadata?.custom_fields?.find((f: any) => f.variable_name === 'orgId')?.value;
+// Paystack Webhook
+app.post('/api/billing/paystack-webhook', async (req, res) => {
+  const crypto = await import('crypto');
+  const secret = process.env.PAYSTACK_SECRET_KEY;
+  
+  if (!secret) {
+    console.error('[Paystack Webhook] Secret key not configured');
+    return res.status(500).send('Webhook secret not configured');
+  }
 
-        if (orgId) {
-          try {
-            await Organization.findByIdAndUpdate(orgId, {
-              'subscription.status': 'active',
-              'subscription.paystackCustomerCode': customer.customer_code,
-              'subscription.lastPaymentReference': reference,
-              'subscription.updatedAt': Date.now(),
-            });
-            console.log(`[Paystack Webhook] Updated subscription for org: ${orgId}`);
-          } catch (error) {
-            console.error(`[Paystack Webhook] MongoDB update error for org ${orgId}:`, error);
-          }
+  const hash = crypto.createHmac('sha512', secret).update(JSON.stringify(req.body)).digest('hex');
+  
+  if (hash === req.headers['x-paystack-signature']) {
+    const event = req.body;
+    console.log('[Paystack Webhook] Received:', event.event);
+
+    if (event.event === 'charge.success') {
+      const { reference, customer, metadata } = event.data;
+      const orgId = metadata?.orgId || metadata?.custom_fields?.find((f: any) => f.variable_name === 'orgId')?.value;
+
+      if (orgId) {
+        try {
+          await dbConnect();
+          await Organization.findByIdAndUpdate(orgId, {
+            'subscription.status': 'active',
+            'subscription.paystackCustomerCode': customer.customer_code,
+            'subscription.lastPaymentReference': reference,
+            'subscription.updatedAt': Date.now(),
+          });
+          console.log(`[Paystack Webhook] Updated subscription for org: ${orgId}`);
+        } catch (error) {
+          console.error(`[Paystack Webhook] MongoDB update error for org ${orgId}:`, error);
         }
       }
-    } else {
-      console.warn('[Paystack Webhook] Invalid signature');
     }
-    
-    res.send(200);
-  });
+  } else {
+    console.warn('[Paystack Webhook] Invalid signature');
+  }
+  
+  res.send(200);
+});
 
-  app.use(bodyParser.urlencoded({ extended: false }));
-  app.use(bodyParser.json());
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+// API Routes
+app.get('/api/health', ensureDb, (req, res) => {
+  res.json({ status: 'ok', database: 'mongodb', env: isVercel ? 'vercel' : 'local' });
+});
 
-  // API Routes
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', database: 'mongodb', env: isVercel ? 'vercel' : 'local' });
-  });
+// Vercel Cron Trigger
+app.get('/api/cron/scheduler', ensureDb, async (req, res) => {
+  console.log('[Cron] Manual scheduler trigger via API');
+  await runScheduler();
+  res.json({ status: 'success', message: 'Scheduler triggered' });
+});
 
-  // Vercel Cron Trigger
-  app.get('/api/cron/scheduler', async (req, res) => {
-    // Basic protection - in production use a secret header check
-    // if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) { ... }
-    console.log('[Cron] Manual scheduler trigger via API');
-    await runScheduler();
-    res.json({ status: 'success', message: 'Scheduler triggered' });
-  });
-
-  // Auth Routes
-  app.post('/api/auth/register', async (req, res) => {
+// Auth Routes
+app.post('/api/auth/register', ensureDb, async (req, res) => {
     const { email, password, displayName } = req.body;
     try {
       const existingUser = await User.findOne({ email });
@@ -124,9 +134,10 @@ async function startServer() {
     }
   });
 
-  app.post('/api/auth/login', async (req, res) => {
+  app.post('/api/auth/login', ensureDb, async (req, res) => {
     const { email, password } = req.body;
     try {
+      await dbConnect();
       const user = await User.findOne({ email });
       if (!user || !(await user.comparePassword(password))) {
         return res.status(401).json({ message: 'Invalid email or password' });
@@ -139,7 +150,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/auth/me', authenticate, async (req: any, res) => {
+  app.get('/api/auth/me', ensureDb, authenticate, async (req: any, res) => {
     try {
       const user = await User.findById(req.userId).populate('orgId');
       if (!user) return res.status(404).json({ message: 'User not found' });
@@ -150,7 +161,7 @@ async function startServer() {
   });
 
   // Organization Routes
-  app.post('/api/organizations', authenticate, async (req: any, res) => {
+  app.post('/api/organizations', ensureDb, authenticate, async (req: any, res) => {
     try {
       const org = new Organization({ ...req.body, ownerId: req.userId });
       await org.save();
@@ -161,7 +172,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/organizations/:id', authenticate, async (req, res) => {
+  app.get('/api/organizations/:id', ensureDb, authenticate, async (req, res) => {
     try {
       const org = await Organization.findById(req.params.id);
       if (!org) return res.status(404).json({ message: 'Organization not found' });
@@ -171,7 +182,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/organizations/:id', authenticate, async (req, res) => {
+  app.patch('/api/organizations/:id', ensureDb, authenticate, async (req, res) => {
     try {
       const org = await Organization.findByIdAndUpdate(req.params.id, req.body, { new: true });
       res.json(org);
@@ -181,7 +192,7 @@ async function startServer() {
   });
 
   // Contact Routes
-  app.get('/api/contacts', authenticate, async (req: any, res) => {
+  app.get('/api/contacts', ensureDb, authenticate, async (req: any, res) => {
     try {
       const user = await User.findById(req.userId);
       if (!user?.orgId) return res.status(400).json({ message: 'User has no organization' });
@@ -192,7 +203,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/contacts', authenticate, async (req: any, res) => {
+  app.post('/api/contacts', ensureDb, authenticate, async (req: any, res) => {
     try {
       const user = await User.findById(req.userId);
       if (!user?.orgId) return res.status(400).json({ message: 'User has no organization' });
@@ -204,7 +215,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/contacts/:id', authenticate, async (req, res) => {
+  app.patch('/api/contacts/:id', ensureDb, authenticate, async (req, res) => {
     try {
       const contact = await Contact.findByIdAndUpdate(req.params.id, req.body, { new: true });
       res.json(contact);
@@ -213,7 +224,7 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/contacts/:id', authenticate, async (req, res) => {
+  app.delete('/api/contacts/:id', ensureDb, authenticate, async (req, res) => {
     try {
       await Contact.findByIdAndDelete(req.params.id);
       res.status(204).send();
@@ -223,7 +234,7 @@ async function startServer() {
   });
 
   // Campaign Routes
-  app.get('/api/campaigns', authenticate, async (req: any, res) => {
+  app.get('/api/campaigns', ensureDb, authenticate, async (req: any, res) => {
     try {
       const user = await User.findById(req.userId);
       if (!user?.orgId) return res.status(400).json({ message: 'User has no organization' });
@@ -234,7 +245,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/campaigns', authenticate, async (req: any, res) => {
+  app.post('/api/campaigns', ensureDb, authenticate, async (req: any, res) => {
     try {
       const user = await User.findById(req.userId);
       if (!user?.orgId) return res.status(400).json({ message: 'User has no organization' });
@@ -246,7 +257,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/campaigns/:id', authenticate, async (req, res) => {
+  app.patch('/api/campaigns/:id', ensureDb, authenticate, async (req, res) => {
     try {
       const campaign = await Campaign.findByIdAndUpdate(req.params.id, req.body, { new: true });
       res.json(campaign);
@@ -256,7 +267,7 @@ async function startServer() {
   });
 
   // Paystack Transaction Verification
-  app.get('/api/billing/verify-paystack/:reference', async (req, res) => {
+  app.get('/api/billing/verify-paystack/:reference', ensureDb, async (req, res) => {
     const { reference } = req.params;
     
     if (!paystackSecretKey) {
@@ -286,7 +297,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/outreach/send', async (req, res) => {
+  app.post('/api/outreach/send', ensureDb, async (req, res) => {
     const { type, phoneNumber, message, accountSid, authToken, fromNumber } = req.body;
 
     if (!accountSid || !authToken || !fromNumber) {
@@ -841,7 +852,5 @@ async function startServer() {
       console.log(`Server running on port ${PORT}`);
     });
   }
-}
 
-startServer();
 export default app;
