@@ -9,63 +9,72 @@ export function useAuth() {
   const [organization, setOrganization] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      const userData = JSON.parse(localStorage.getItem('user') || 'null');
+  const checkAuth = async () => {
+    const token = localStorage.getItem('token');
+    const userData = JSON.parse(localStorage.getItem('user') || 'null');
+    
+    if (token && userData) {
+      setUser(userData);
       
-      if (token && userData) {
-        setUser(userData);
-        
-        try {
-          // Initial fetch to verify token and get profile
-          const profileSnap = await getDoc(doc(db, 'users', userData.id));
-          if (profileSnap.exists()) {
-            const profileData = profileSnap.data() as UserProfile;
-            setProfile(profileData);
+      try {
+        // Initial fetch to verify token and get profile
+        const profileSnap = await getDoc(doc(db, 'users', userData.id));
+        if (profileSnap.exists()) {
+          const profileData = profileSnap.data() as UserProfile;
+          setProfile(profileData);
 
-            if (profileData.orgId) {
-              const orgSnap = await getDoc(doc(db, 'organizations', profileData.orgId));
-              if (orgSnap.exists()) {
-                setOrganization(orgSnap.data());
-              }
+          if (profileData.orgId) {
+            const orgSnap = await getDoc(doc(db, 'organizations', profileData.orgId));
+            if (orgSnap.exists()) {
+              setOrganization(orgSnap.data());
             }
-          } else {
-            // User doesn't exist in DB anymore
-            throw new Error('User profile not found');
           }
-        } catch (err) {
-          console.error('Auth initialization failed:', err);
-          // If it's a 401/403 or profile not found, clear auth
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setUser(null);
-          setProfile(null);
-        } finally {
-          setLoading(false);
+        } else {
+          // User doesn't exist in DB anymore
+          throw new Error('User profile not found');
         }
-
-        // Start snapshot for real-time updates after initial load
-        const unsubProfile = onSnapshot(doc(db, 'users', userData.id), (docSnap) => {
-          if (docSnap.exists()) {
-            const profileData = docSnap.data() as UserProfile;
-            setProfile(profileData);
-          }
-        });
-
-        return () => unsubProfile();
-      } else {
+      } catch (err) {
+        console.error('Auth initialization failed:', err);
+        // If it's a 401/403 or profile not found, clear auth
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setUser(null);
         setProfile(null);
-        setOrganization(null);
+      } finally {
         setLoading(false);
       }
+
+      // Start snapshot for real-time updates after initial load
+      const unsubProfile = onSnapshot(doc(db, 'users', userData.id), (docSnap) => {
+        if (docSnap.exists()) {
+          const profileData = docSnap.data() as UserProfile;
+          setProfile(profileData);
+        }
+      });
+
+      return unsubProfile;
+    } else {
+      setUser(null);
+      setProfile(null);
+      setOrganization(null);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let unsub: any;
+    const init = async () => {
+      unsub = await checkAuth();
     };
 
     window.addEventListener('auth-change', checkAuth);
-    checkAuth();
-    return () => window.removeEventListener('auth-change', checkAuth);
+    init();
+    
+    return () => {
+      window.removeEventListener('auth-change', checkAuth);
+      if (unsub) unsub();
+    };
   }, []);
 
-  return { user, profile, organization, loading };
+  return { user, profile, organization, loading, refreshAuth: checkAuth };
 }
