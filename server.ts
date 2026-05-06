@@ -8,14 +8,14 @@ import { GoogleGenAI } from "@google/genai";
 import { addMinutes, addDays, addWeeks, addMonths, isBefore, startOfDay, set } from 'date-fns';
 import { Resend } from 'resend';
 import jwt from 'jsonwebtoken';
-import dbConnect from './src/lib/db.ts';
-import User from './src/models/User.ts';
-import Organization from './src/models/Organization.ts';
-import Contact from './src/models/Contact.ts';
-import Campaign from './src/models/Campaign.ts';
-import Interaction from './src/models/Interaction.ts';
-import SystemLog from './src/models/SystemLog.ts';
-import { SystemConfig } from './src/models/SystemConfig.ts';
+import dbConnect from './src/lib/db';
+import User from './src/models/User';
+import Organization from './src/models/Organization';
+import Contact from './src/models/Contact';
+import Campaign from './src/models/Campaign';
+import Interaction from './src/models/Interaction';
+import SystemLog from './src/models/SystemLog';
+import { SystemConfig } from './src/models/SystemConfig';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
 
@@ -43,7 +43,8 @@ const ensureDb = async (req: any, res: any, next: any) => {
     await dbConnect();
     next();
   } catch (err: any) {
-    res.status(500).json({ message: 'Database connection failed' });
+    console.error('Database connection error:', err);
+    res.status(500).json({ message: `Database connection failed: ${err.message}` });
   }
 };
 
