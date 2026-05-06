@@ -239,6 +239,24 @@ async function startServer() {
     }
   });
 
+  app.get('/api/data/:collection/:id', authenticateToken, async (req: any, res) => {
+    try {
+      const { collection, id } = req.params;
+      const orgId = req.user.orgId;
+      
+      let data;
+      if (collection === 'contacts') data = await Contact.findOne({ _id: id, orgId });
+      else if (collection === 'campaigns') data = await Campaign.findOne({ _id: id, orgId });
+      else if (collection === 'organizations') data = await Organization.findById(id || orgId);
+      else if (collection === 'users') data = await User.findById(id);
+      else return res.status(404).json({ message: 'Collection not found' });
+
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post('/api/data/:collection', authenticateToken, async (req: any, res) => {
     try {
       const { collection } = req.params;

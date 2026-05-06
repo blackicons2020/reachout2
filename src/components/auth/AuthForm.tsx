@@ -68,10 +68,10 @@ export function AuthForm({ type }: AuthFormProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0b0e14] p-4">
-      <div className="w-full max-w-[360px] space-y-6">
+      <div className="w-full max-w-[340px] space-y-4">
         <div className="text-center">
-          <Logo className="w-8 h-8 mx-auto mb-4" size={32} />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <Logo className="w-7 h-7 mx-auto mb-3" size={28} />
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
             {type === 'login' ? 'Welcome back' : 'Create your account'}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
@@ -81,47 +81,47 @@ export function AuthForm({ type }: AuthFormProps) {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-100 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-100 dark:border-gray-800">
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3 text-red-600 animate-in fade-in slide-in-from-top-2">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <p className="text-xs font-bold leading-relaxed">{error}</p>
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {type === 'signup' && (
               <div className="space-y-6">
                 {/* Registration Type Selection */}
-                <div className="p-5 bg-slate-900/40 dark:bg-slate-950/50 rounded-2xl border border-white/5 dark:border-white/5">
-                  <label className="block text-[10px] font-black text-blue-400 uppercase tracking-[0.25em] text-center mb-5">
+                <div className="p-3 bg-slate-900/40 dark:bg-slate-950/50 rounded-xl border border-white/5 dark:border-white/5">
+                  <label className="block text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] text-center mb-3">
                     Registration Type
                   </label>
-                  <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-950/30 rounded-xl border border-white/5">
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950/30 rounded-lg border border-white/5">
                     <button
                       type="button"
                       onClick={() => setSignupMode('create')}
                       className={cn(
-                        "flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-all text-[11px] font-bold uppercase tracking-wider",
+                        "flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-md transition-all text-[10px] font-bold uppercase tracking-wider",
                         signupMode === 'create'
-                          ? "bg-slate-800 text-blue-400 shadow-lg border border-white/10"
+                          ? "bg-slate-800 text-blue-400 shadow-md border border-white/10"
                           : "text-slate-500 hover:bg-white/5"
                       )}
                     >
-                      <Building2 className="w-4 h-4" />
-                      <span>New Organization</span>
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>New Org</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setSignupMode('join')}
                       className={cn(
-                        "flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-all text-[11px] font-bold uppercase tracking-wider",
+                        "flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-md transition-all text-[10px] font-bold uppercase tracking-wider",
                         signupMode === 'join'
-                          ? "bg-slate-800 text-blue-400 shadow-lg border border-white/10"
+                          ? "bg-slate-800 text-blue-400 shadow-md border border-white/10"
                           : "text-slate-500 hover:bg-white/5"
                       )}
                     >
-                      <Users className="w-4 h-4" />
-                      <span>Joining Existing</span>
+                      <Users className="w-3.5 h-3.5" />
+                      <span>Join Org</span>
                     </button>
                   </div>
                 </div>
@@ -148,27 +148,27 @@ export function AuthForm({ type }: AuthFormProps) {
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input 
-                  type="email"
-                  required
-                  placeholder="name@company.com"
-                  className="w-full pl-12 pr-4 py-4 bg-blue-50/50 dark:bg-slate-950/50 border border-gray-200 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="email"
+                    required
+                    placeholder="name@company.com"
+                    className="w-full pl-10 pr-4 py-2.5 bg-blue-50/50 dark:bg-slate-950/50 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white text-sm"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
               </div>
             </div>
 
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-12 py-4 bg-blue-50/50 dark:bg-slate-950/50 border border-gray-200 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium"
+                  className="w-full pl-10 pr-10 py-2.5 bg-blue-50/50 dark:bg-slate-950/50 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white text-sm"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -185,7 +185,7 @@ export function AuthForm({ type }: AuthFormProps) {
             <button 
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+              className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 group disabled:opacity-50 text-sm"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
