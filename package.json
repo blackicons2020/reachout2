@@ -19,10 +19,7 @@
     "@types/mongoose": "^5.11.96",
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
-<<<<<<< HEAD
-=======
     "axios": "^1.16.0",
->>>>>>> f78d82d23904cb31b9212a813995e1b958994366
     "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.2",
     "clsx": "^2.1.1",

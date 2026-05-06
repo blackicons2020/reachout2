@@ -1,6 +1,9 @@
 import express from 'express';
+import { createServer as createViteServer } from 'vite';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import bodyParser from 'body-parser';
 import cors from 'cors';
-<<<<<<< HEAD
 import { GoogleGenAI } from "@google/genai";
 import { addMinutes, addDays, addWeeks, addMonths, isBefore, startOfDay, set } from 'date-fns';
 import { Resend } from 'resend';
@@ -479,87 +482,6 @@ async function startServer() {
   };
 
   setInterval(runScheduler, 60000);
-=======
-import bodyParser from 'body-parser';
-import mongoose from 'mongoose';
-import jwt from 'jsonwebtoken';
-
-// Import Models with explicit .js extensions for Vercel ESM resolution
-import User from './src/models/User.js';
-import Organization from './src/models/Organization.js';
-
-const MONGODB_URI = process.env.MONGODB_URI || '';
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
-
-export const app = express();
-app.use(cors());
-app.use(bodyParser.json());
-
-// DB Cache
-let cached = (global as any).mongoose;
-if (!cached) cached = (global as any).mongoose = { conn: null, promise: null };
-
-async function dbConnect() {
-  if (cached.conn) return cached.conn;
-  if (!cached.promise) {
-    const opts = { 
-      bufferCommands: false, 
-      serverSelectionTimeoutMS: 10000, // 10 seconds
-      connectTimeoutMS: 10000
-    };
-    console.log('Attempting MongoDB connection...');
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then(m => {
-      console.log('MongoDB connected successfully');
-      return m;
-    });
-  }
-  try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    throw e;
-  }
-  return cached.conn;
->>>>>>> f78d82d23904cb31b9212a813995e1b958994366
 }
 
-const ensureDb = async (req: any, res: any, next: any) => {
-  if (!MONGODB_URI) return res.status(500).json({ message: 'Environment Variable MONGODB_URI is missing in Vercel' });
-  try {
-    await dbConnect();
-    next();
-  } catch (err: any) {
-    console.error('DB Connection error:', err.message);
-    res.status(500).json({ 
-      error: 'Database Connection Failed',
-      reason: err.message,
-      tip: 'Check if your MongoDB Atlas IP Whitelist allows access from everywhere (0.0.0.0/0)'
-    });
-  }
-};
-
-app.get('/api/health', ensureDb, (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    database: 'connected',
-    env: process.env.VERCEL ? 'production' : 'development'
-  });
-});
-
-app.post('/api/auth/register', ensureDb, async (req, res) => {
-  const { email, password, displayName } = req.body;
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: 'User already exists' });
-
-    const user = new User({ email, password, displayName });
-    await user.save();
-
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ token, user: { id: user._id, email: user.email, displayName: user.displayName, role: user.role } });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-export default app;
+startServer();

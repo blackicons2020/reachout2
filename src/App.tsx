@@ -13,7 +13,6 @@ import { Settings } from './components/settings/Settings';
 import { AuthForm } from './components/auth/AuthForm';
 import { CompleteProfile } from './components/auth/CompleteProfile';
 import { Contact, Campaign } from './types';
-<<<<<<< HEAD
 import { generateId, cn } from './lib/utils';
 import { MessageSquare, Phone, Send, Edit2, Trash2, X, Copy, AlertCircle, CheckCircle2, Loader2, Shield, Activity, Mail, Layers, MessageCircle } from 'lucide-react';
 import { outreachService } from './services/outreachService';
@@ -29,11 +28,6 @@ import {
 import { db, auth } from './lib/firebase';
 const { collection, query, doc, where, orderBy } = db as any;
 const signOut = auth.signOut;
-=======
-import { cn } from './lib/utils';
-import { MessageSquare, X, AlertCircle, CheckCircle2, Loader2, Shield, Activity, Layers } from 'lucide-react';
-import api from './lib/api';
->>>>>>> f78d82d23904cb31b9212a813995e1b958994366
 import Reports from './components/reports/Reports';
 import CallLogs from './components/reports/CallLogs';
 import Members from './components/organization/Members';
