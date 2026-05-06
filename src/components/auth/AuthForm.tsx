@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { Mail, Lock, ArrowRight, Loader2, AlertCircle, Building2, Users, Shield, Link as LinkIcon, Eye, EyeOff } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Logo } from '../layout/Logo';
+=======
+import { Mail, Lock, ArrowRight, Apple, Chrome, Loader2, AlertCircle, Building2, Users, Shield, Link as LinkIcon, Eye, EyeOff } from 'lucide-react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Logo } from '../layout/Logo';
+import api from '@/lib/api';
+>>>>>>> f78d82d23904cb31b9212a813995e1b958994366
 
 interface AuthFormProps {
   type: 'login' | 'signup';
 }
-
 export function AuthForm({ type }: AuthFormProps) {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const inviteCode = searchParams.get('invite');
   const navigate = useNavigate();
 
@@ -22,6 +30,18 @@ export function AuthForm({ type }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+<<<<<<< HEAD
+=======
+  const [systemConfig, setSystemConfig] = useState<any>({ registrationsEnabled: true });
+
+  useEffect(() => {
+    // If invite code changes in URL, update state
+    if (inviteCode && type === 'signup') {
+      setSignupMode('join');
+      setJoinCode(inviteCode);
+    }
+  }, [inviteCode, type]);
+>>>>>>> f78d82d23904cb31b9212a813995e1b958994366
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +49,7 @@ export function AuthForm({ type }: AuthFormProps) {
     setError(null);
 
     try {
+<<<<<<< HEAD
       const endpoint = type === 'signup' ? '/api/auth/register' : '/api/auth/login';
       const body = type === 'signup' 
         ? { email, password, name, orgName: signupMode === 'create' ? orgName : undefined, joinCode: signupMode === 'join' ? joinCode : undefined }
@@ -44,6 +65,24 @@ export function AuthForm({ type }: AuthFormProps) {
 
       if (!response.ok) {
         throw new Error(data.message || 'Authentication failed');
+=======
+      if (type === 'signup') {
+        const response = await api.post('/auth/register', {
+          email,
+          password,
+          displayName: email.split('@')[0],
+          inviteCode: signupMode === 'join' ? joinCode : undefined
+        });
+        
+        localStorage.setItem('token', response.data.token);
+        window.dispatchEvent(new Event('auth-change'));
+        navigate('/');
+      } else {
+        const response = await api.post('/auth/login', { email, password });
+        localStorage.setItem('token', response.data.token);
+        window.dispatchEvent(new Event('auth-change'));
+        navigate('/');
+>>>>>>> f78d82d23904cb31b9212a813995e1b958994366
       }
 
       // Store token and user
@@ -54,7 +93,11 @@ export function AuthForm({ type }: AuthFormProps) {
       navigate('/');
     } catch (err: any) {
       console.error('Auth error:', err);
+<<<<<<< HEAD
       setError(err.message || 'An error occurred during authentication');
+=======
+      setError(err.response?.data?.message || 'Authentication failed');
+>>>>>>> f78d82d23904cb31b9212a813995e1b958994366
     } finally {
       setIsLoading(false);
     }

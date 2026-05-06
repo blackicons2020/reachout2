@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import api from '@/lib/api';
 import { Link } from 'react-router-dom';
 import { 
   Users, 
@@ -23,7 +22,6 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { cn } from '@/lib/utils';
-import { useTheme } from '@/hooks/useTheme';
 
 const StatCard = ({ title, value, subValue, icon: Icon, color }: any) => (
   <div className="bg-white dark:bg-[#1e293b] p-6 rounded-2xl border border-gray-100 dark:border-slate-800/50 shadow-sm transition-all hover:shadow-md">
@@ -40,16 +38,20 @@ const StatCard = ({ title, value, subValue, icon: Icon, color }: any) => (
 
 export function BusinessDashboard({ campaigns = [] }: { campaigns?: any[] }) {
   const { profile, organization } = useAuth();
-  const { theme } = useTheme();
-  const [contacts, setContacts] = React.useState<any[]>([]);
+  const [contacts, setContacts] = useState<any[]>([]);
 
-  React.useEffect(() => {
-    if (profile?.orgId) {
-      const unsubContacts = onSnapshot(collection(db, 'organizations', profile.orgId, 'contacts'), (snap) => {
-        setContacts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      });
-      return () => unsubContacts();
-    }
+  useEffect(() => {
+    const fetchContacts = async () => {
+      if (profile?.orgId) {
+        try {
+          const res = await api.get('/contacts');
+          setContacts(res.data);
+        } catch (err) {
+          console.error('BusinessDashboard fetch error:', err);
+        }
+      }
+    };
+    fetchContacts();
   }, [profile]);
 
   const campaignStats = campaigns
@@ -100,7 +102,7 @@ export function BusinessDashboard({ campaigns = [] }: { campaigns?: any[] }) {
         <StatCard 
           title="Customer CRM" 
           value={contacts.length.toLocaleString()} 
-          subValue={`+${contacts.filter((c: any) => Date.now() - c.createdAt < 7 * 24 * 60 * 60 * 1000).length} new leads`} 
+          subValue={`+${contacts.filter((c: any) => Date.now() - (c.createdAt || 0) < 7 * 24 * 60 * 60 * 1000).length} new leads`} 
           icon={Users} 
           color="bg-blue-50 text-blue-600" 
         />

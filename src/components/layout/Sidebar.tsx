@@ -1,7 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
 import { 
   LayoutDashboard, 
   Users, 
@@ -229,7 +227,10 @@ export function Sidebar({ onClose, notifications = [], contactCount = 0 }: { onC
         </div>
 
         <button 
-          onClick={() => signOut(auth)}
+          onClick={() => {
+            localStorage.removeItem('token');
+            window.dispatchEvent(new Event('auth-change'));
+          }}
           className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
         >
           <LogOut className="w-5 h-5" />

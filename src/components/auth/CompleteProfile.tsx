@@ -10,8 +10,7 @@ import {
   Tag
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { doc, setDoc, updateDoc } from 'firebase/firestore';
-import { auth, db } from '../../lib/firebase';
+import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { Logo } from '../layout/Logo';
 
@@ -25,7 +24,7 @@ const ORG_TYPES = [
 ];
 
 export function CompleteProfile() {
-  const { user } = useAuth();
+  const { user, refreshAuth } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,36 +46,24 @@ export function CompleteProfile() {
     setError(null);
 
     try {
-      const orgId = `org_${Math.random().toString(36).substring(2, 11)}`;
-      
-      // Create Organization
-      await setDoc(doc(db, 'organizations', orgId), {
-        id: orgId,
+      await api.post('/organizations', {
         name: formData.name,
         type: formData.type,
         state: formData.state,
         city: formData.city,
         email: formData.email,
         phone: formData.phone,
-        ownerId: user.uid,
         settings: {
           twilio: {},
           voice: { provider: 'elevenlabs' }
-        },
-        createdAt: Date.now()
+        }
       });
 
-      // Update User Profile
-      await updateDoc(doc(db, 'users', user.uid), {
-        orgId: orgId,
-        setupCompleted: true,
-        displayName: formData.name // Using org name as initial display name or we could add a user name field
-      });
-
+      await refreshAuth?.();
       navigate('/');
     } catch (err: any) {
       console.error('Setup error:', err);
-      setError(err.message || 'Failed to complete setup. Please try again.');
+      setError(err.response?.data?.message || 'Failed to complete setup. Please try again.');
     } finally {
       setIsLoading(false);
     }
