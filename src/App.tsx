@@ -185,25 +185,28 @@ export default function App() {
   return (
     <ThemeProvider>
       <Router>
-        {!user ? (
         <Routes>
           <Route path="/login" element={<AuthForm type="login" />} />
           <Route path="/signup" element={<AuthForm type="signup" />} />
-          <Route path="*" element={<Navigate to="/login" />} />
-        </Routes>
-      ) : !profile ? (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-          <p className="font-bold text-gray-500 uppercase tracking-widest text-xs">Loading User Profile...</p>
-          <button onClick={handleLogout} className="text-xs text-blue-600 font-bold hover:underline">Or Logout</button>
-        </div>
-      ) : profile.setupCompleted === false ? (
-        <Routes>
-          <Route path="/complete-profile" element={<CompleteProfile />} />
-          <Route path="*" element={<Navigate to="/complete-profile" />} />
-        </Routes>
-      ) : (
-        <PageWrapper notifications={notifications} contactCount={contacts.length}>
+          
+          {!user ? (
+            <Route path="*" element={<Navigate to="/login" />} />
+          ) : !profile ? (
+            <Route path="*" element={
+              <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
+                <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+                <p className="font-bold text-gray-500 uppercase tracking-widest text-xs">Loading User Profile...</p>
+                <button onClick={handleLogout} className="text-xs text-blue-600 font-bold hover:underline">Or Logout</button>
+              </div>
+            } />
+          ) : profile.setupCompleted === false ? (
+            <>
+              <Route path="/complete-profile" element={<CompleteProfile />} />
+              <Route path="*" element={<Navigate to="/complete-profile" />} />
+            </>
+          ) : (
+            <Route path="*" element={
+              <PageWrapper notifications={notifications} contactCount={contacts.length}>
           {notification && (
             <div className={cn(
               "fixed top-6 right-6 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl animate-in slide-in-from-right-8 duration-300",
@@ -294,9 +297,10 @@ export default function App() {
             <Route path="/notifications" element={<Notifications notifications={notifications} />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </PageWrapper>
-      )}
+            </Routes>
+          </PageWrapper>
+        } />
+      </Routes>
 
       {isImporting && (
         <ContactImport 
