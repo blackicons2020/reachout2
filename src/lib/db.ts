@@ -13,16 +13,35 @@ const fetchAPI = async (endpoint: string, options: any = {}) => {
     ...options.headers,
   };
   
-  const response = await fetch(endpoint, { ...options, headers });
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
-      // localStorage.removeItem('token');
-      // window.location.href = '/login';
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+  
+  try {
+    const response = await fetch(endpoint, { 
+      ...options, 
+      headers,
+      signal: controller.signal 
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        // window.location.href = '/login';
+      }
+      const err = await response.json().catch(() => ({ message: response.statusText }));
+      throw new Error(err.message || 'API Error');
     }
-    const err = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(err.message || 'API Error');
+    return response.json();
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out');
+    }
+    throw error;
   }
-  return response.json();
 };
 
 export const collection = (dbInstance: any, ...path: string[]) => {
