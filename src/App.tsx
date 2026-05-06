@@ -23,10 +23,14 @@ import {
   deleteDoc, 
   getDoc,
   setDoc,
-  writeBatch
+  writeBatch,
+  collection,
+  query,
+  doc,
+  where,
+  orderBy
 } from './lib/db';
 import { db, auth } from './lib/firebase';
-const { collection, query, doc, where, orderBy } = db as any;
 const signOut = auth.signOut;
 import Reports from './components/reports/Reports';
 import CallLogs from './components/reports/CallLogs';
