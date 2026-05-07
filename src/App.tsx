@@ -139,6 +139,16 @@ function AppContent() {
     }
   };
 
+  const labels = (() => {
+    const type = organization?.type;
+    if (type === 'religious') return { contacts: 'Souls Database', campaigns: 'Outreach', contactsLabel: 'Souls' };
+    if (type === 'political') return { contacts: 'Voter Database', campaigns: 'Engagements', contactsLabel: 'Voters' };
+    if (type === 'government') return { contacts: 'Citizens Database', campaigns: 'Public Engagements', contactsLabel: 'Citizens' };
+    if (type === 'business') return { contacts: 'Customers', campaigns: 'Engagements', contactsLabel: 'Customers' };
+    if (type === 'academic') return { contacts: 'Students Database', campaigns: 'Engagements', contactsLabel: 'Students' };
+    return { contacts: 'Contacts', campaigns: 'Campaigns', contactsLabel: 'Contacts' };
+  })();
+
   return (
     <PageWrapper notifications={[]} contactCount={contacts.length}>
       <Routes>

@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Plus,
   MessageSquare,
-  PrayingHand as Praying,
   Sparkles
 } from 'lucide-react';
 import { 
