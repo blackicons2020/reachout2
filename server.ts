@@ -476,7 +476,7 @@ async function startServer() {
             message: campaign.message.replace(/{{first_name}}/g, contact.firstName || ''),
             accountSid: org.settings.twilio.accountSid,
             authToken: org.settings.twilio.authToken,
-            from: campaign.type === 'sms' ? org.settings.twilio?.smsFromNumber : org.settings.twilio?.whatsappFromNumber
+            from: campaign.type === 'whatsapp' ? org.settings.twilio?.whatsappFromNumber : org.settings.twilio?.smsFromNumber
           });
           if (success) sentCount++; else failedCount++;
           
@@ -503,11 +503,22 @@ async function startServer() {
     }
   };
 
+  const formatPhone = (phone: string) => {
+    if (!phone) return '';
+    const clean = phone.replace(/\D/g, '');
+    return phone.startsWith('+') ? phone : `+${clean}`;
+  };
+
   const sendTwilioMessage = async ({ type, to, message, accountSid, authToken, from }: any) => {
     if (!accountSid || !authToken || !from) return false;
     const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
-    const twilioTo = type === 'whatsapp' ? `whatsapp:${to}` : to;
-    const twilioFrom = type === 'whatsapp' ? `whatsapp:${from}` : from;
+    
+    const cleanTo = formatPhone(to);
+    const cleanFrom = formatPhone(from);
+    
+    const twilioTo = type === 'whatsapp' ? `whatsapp:${cleanTo}` : cleanTo;
+    const twilioFrom = type === 'whatsapp' ? `whatsapp:${cleanFrom}` : cleanFrom;
+    
     const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
 
     try {
@@ -516,8 +527,13 @@ async function startServer() {
         headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ To: twilioTo, From: twilioFrom, Body: message })
       });
+      if (!response.ok) {
+        const err = await response.json();
+        console.error('[Twilio] Error:', err.message);
+      }
       return response.ok;
-    } catch {
+    } catch (err) {
+      console.error('[Twilio] Fetch Error:', err);
       return false;
     }
   };
