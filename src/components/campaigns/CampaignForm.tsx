@@ -28,7 +28,7 @@ interface CampaignFormProps {
   organizationType?: string;
 }
 
-export function CampaignForm({ onSave, onClose, initialData, isDuplicating, availableGroups, brandName, autoBranding = true, organizationType }: CampaignFormProps) {
+export function CampaignForm({ onSave, onClose, initialData, isDuplicating, availableGroups = [], brandName, autoBranding = true, organizationType }: CampaignFormProps) {
   const [type, setType] = useState<'sms' | 'whatsapp' | 'voice' | 'email'>(initialData?.type || 'sms');
   const [name, setName] = useState(isDuplicating ? `Copy of ${initialData?.name}` : (initialData?.name || ''));
   const [message, setMessage] = useState(initialData?.message || '');

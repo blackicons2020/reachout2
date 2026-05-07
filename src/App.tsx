@@ -188,7 +188,20 @@ function AppContent() {
 
       {isImporting && <ContactImport onImport={async (l) => { await Promise.all(l.map(c => api.post('/contacts', c))); fetchData(); setIsImporting(false); }} onClose={() => setIsImporting(false)} />}
       {isAddingContact && <ContactForm contact={editingContact} onSave={handleSaveContact} onClose={() => { setIsAddingContact(false); setEditingContact(null); }} organizationType={organization?.type} />}
-      {isCreatingCampaign && <CampaignForm campaign={editingCampaign || duplicateData} onSave={handleSaveCampaign} onClose={() => { setIsCreatingCampaign(false); setEditingCampaign(null); setDuplicateData(null); }} contacts={contacts} />}
+      {isCreatingCampaign && (
+        <CampaignForm 
+          initialData={editingCampaign || duplicateData} 
+          onSave={handleSaveCampaign} 
+          onClose={() => { 
+            setIsCreatingCampaign(false); 
+            setEditingCampaign(null); 
+            setDuplicateData(null); 
+          }} 
+          availableGroups={Array.from(new Set(contacts.flatMap(c => c.groups || [])))}
+          organizationType={organization?.type}
+          brandName={organization?.name}
+        />
+      )}
       
       {notification && (
         <div className={cn("fixed bottom-8 right-8 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl animate-in slide-in-from-bottom-8", notification.type === 'success' ? "bg-green-600 text-white" : "bg-red-600 text-white")}>
