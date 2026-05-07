@@ -186,13 +186,29 @@ export function Billing() {
   };
 
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [exchangeRate, setExchangeRate] = useState<number>(1550);
+
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const response = await fetch('https://open.er-api.com/v6/latest/USD');
+        const data = await response.json();
+        if (data.rates && data.rates.NGN) {
+          setExchangeRate(data.rates.NGN);
+        }
+      } catch (err) {
+        console.error('Failed to fetch exchange rate:', err);
+      }
+    };
+    fetchRate();
+  }, []);
 
   const config = {
     reference: (new Date()).getTime().toString(),
     email: user?.email || "",
-    amount: selectedPlan ? Math.floor(getPrice(selectedPlan.monthlyPrice) * 100) : 0,
+    amount: selectedPlan ? Math.floor(getPrice(selectedPlan.monthlyPrice) * exchangeRate * 100) : 0,
     publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "",
-    currency: "USD",
+    currency: "NGN",
     metadata: {
       custom_fields: [
         {
@@ -209,6 +225,11 @@ export function Billing() {
           display_name: "Billing Cycle",
           variable_name: "billingCycle",
           value: billingCycle
+        },
+        {
+          display_name: "Exchange Rate",
+          variable_name: "exchangeRate",
+          value: exchangeRate
         }
       ]
     }
@@ -376,6 +397,9 @@ export function Billing() {
                 <span className="text-4xl font-black text-gray-900 dark:text-white">${getMonthlyEquivalent(plan.monthlyPrice).toLocaleString()}</span>
                 <span className="text-gray-500 dark:text-gray-400 font-bold text-sm">/mo</span>
               </div>
+              <p className="text-[10px] text-gray-400 font-black uppercase mt-1 tracking-widest">
+                ≈ ₦{Math.floor(getMonthlyEquivalent(plan.monthlyPrice) * exchangeRate).toLocaleString()}
+              </p>
               {billingCycle === 'yearly' && (
                 <div className="space-y-1 mt-1">
                   <p className="text-xs text-green-600 dark:text-green-400 font-bold">
