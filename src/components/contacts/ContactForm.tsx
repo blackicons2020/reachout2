@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, Tag, Users, Save, Loader2 } from 'lucide-react';
+import { X, User, Phone, Tag, MapPin, Save, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Contact } from '@/types';
 
@@ -14,11 +14,8 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
   const [firstName, setFirstName] = useState(contact?.firstName || '');
   const [lastName, setLastName] = useState(contact?.lastName || '');
   const [phone, setPhone] = useState(contact?.phone || '');
-  const [email, setEmail] = useState(contact?.email || '');
   const [city, setCity] = useState(contact?.city || '');
-  const [state, setState] = useState(contact?.state || '');
   const [tags, setTags] = useState<string>(contact?.tags?.join(', ') || '');
-  const [groups, setGroups] = useState<string>(contact?.groups?.join(', ') || '');
   const [status, setStatus] = useState<Contact['status']>(contact?.status || 'active');
   
   // Specific fields
@@ -32,11 +29,8 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
     setFirstName(contact?.firstName || '');
     setLastName(contact?.lastName || '');
     setPhone(contact?.phone || '');
-    setEmail(contact?.email || '');
     setCity(contact?.city || '');
-    setState(contact?.state || '');
     setTags(contact?.tags?.join(', ') || '');
-    setGroups(contact?.groups?.join(', ') || '');
     setStatus(contact?.status || 'active');
     setLocation(contact?.location || '');
     setSource(contact?.source || '');
@@ -52,11 +46,8 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
       firstName,
       lastName,
       phone,
-      email,
       city,
-      state,
       tags: tags.split(',').map(t => t.trim()).filter(t => t !== ''),
-      groups: groups.split(',').map(g => g.trim()).filter(g => g !== ''),
       status,
       location,
       source,
@@ -79,7 +70,8 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-          <form id="contact-form" onSubmit={handleSubmit} className="space-y-5">
+          <form id="contact-form" onSubmit={handleSubmit} className="space-y-6">
+            {/* Name Section */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">First Name</label>
@@ -89,7 +81,7 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
                     type="text"
                     required
                     placeholder="John"
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white dark:placeholder:text-slate-500"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                   />
@@ -101,13 +93,14 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
                   type="text"
                   required
                   placeholder="Doe"
-                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white dark:placeholder:text-slate-500"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                 />
               </div>
             </div>
 
+            {/* Contact Details */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Phone Number</label>
               <div className="relative">
@@ -116,23 +109,9 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
                   type="tel"
                   required
                   placeholder="+234..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white dark:placeholder:text-slate-500"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Email Address (Optional)</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="email"
-                  placeholder="john@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white dark:placeholder:text-slate-500"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </div>
@@ -140,75 +119,31 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">City</label>
-                <input 
-                  type="text"
-                  placeholder="Lagos"
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white dark:placeholder:text-slate-500"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                />
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="text"
+                    placeholder="e.g. Lagos"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
+                </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">State</label>
-                <input 
-                  type="text"
-                  placeholder="Lagos State"
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white dark:placeholder:text-slate-500"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                />
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Status</label>
+                <select 
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium dark:text-white"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as any)}
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="lead">Lead</option>
+                  <option value="customer">Customer</option>
+                </select>
               </div>
             </div>
-
-            {organizationType === 'religious' && (
-              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Location / Church Branch</label>
-                  <input 
-                    type="text"
-                    placeholder="e.g. Main Sanctuary"
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Outreach Source</label>
-                  <input 
-                    type="text"
-                    placeholder="e.g. Street Evangelism"
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
-                    value={source}
-                    onChange={(e) => setSource(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-
-            {organizationType === 'political' && (
-              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">LGA</label>
-                  <input 
-                    type="text"
-                    placeholder="Local Government Area"
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
-                    value={lga}
-                    onChange={(e) => setLga(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Ward</label>
-                  <input 
-                    type="text"
-                    placeholder="Ward Number/Name"
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
-                    value={ward}
-                    onChange={(e) => setWard(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tags (comma separated)</label>
@@ -217,47 +152,43 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
                 <input 
                   type="text"
                   placeholder="VIP, Member, Lead"
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white dark:placeholder:text-slate-500"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Groups (comma separated)</label>
-              <div className="relative">
-                <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="text"
-                  placeholder="Zone A, Choir, Staff"
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white dark:placeholder:text-slate-500"
-                  value={groups}
-                  onChange={(e) => setGroups(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Status</label>
-                <select 
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium dark:text-white"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as any)}
-                >
-                  <option value="active" className="dark:bg-slate-950">Active</option>
-                  <option value="inactive" className="dark:bg-slate-950">Inactive</option>
-                  <option value="lead" className="dark:bg-slate-950">Lead</option>
-                  <option value="customer" className="dark:bg-slate-950">Customer</option>
-                  {organizationType === 'political' && (
+            {/* Organization Specific Section */}
+            {(organizationType === 'religious' || organizationType === 'political') && (
+              <div className="p-4 bg-blue-50/50 dark:bg-slate-800/50 rounded-2xl border border-blue-100 dark:border-slate-700 space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="grid grid-cols-2 gap-4">
+                  {organizationType === 'religious' ? (
                     <>
-                      <option value="engaged" className="dark:bg-slate-950">Engaged</option>
-                      <option value="cold" className="dark:bg-slate-950">Cold</option>
-                      <option value="converted" className="dark:bg-slate-950">Converted</option>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Location</label>
+                        <input type="text" className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-700 rounded-lg text-xs dark:text-white" value={location} onChange={(e) => setLocation(e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Source</label>
+                        <input type="text" className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-700 rounded-lg text-xs dark:text-white" value={source} onChange={(e) => setSource(e.target.value)} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">LGA</label>
+                        <input type="text" className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-700 rounded-lg text-xs dark:text-white" value={lga} onChange={(e) => setLga(e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ward</label>
+                        <input type="text" className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-700 rounded-lg text-xs dark:text-white" value={ward} onChange={(e) => setWard(e.target.value)} />
+                      </div>
                     </>
                   )}
-                </select>
-            </div>
+                </div>
+              </div>
+            )}
           </form>
         </div>
 
@@ -273,14 +204,10 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
             type="submit"
             form="contact-form"
             disabled={isSaving}
-            className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            <span>{isSaving ? 'Saving...' : (contact ? 'Update Contact' : 'Save Contact')}</span>
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            <span>{isSaving ? 'Saving...' : (contact ? 'Update' : 'Save')}</span>
           </button>
         </div>
       </div>
