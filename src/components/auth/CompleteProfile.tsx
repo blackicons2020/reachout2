@@ -201,20 +201,6 @@ export function CompleteProfile() {
                 </>
               )}
             </button>
-            
-            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('user');
-                  window.location.href = '/login';
-                }}
-                className="text-xs font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest"
-              >
-                Sign out and return to login
-              </button>
-            </div>
           </form>
         </div>
       </div>
