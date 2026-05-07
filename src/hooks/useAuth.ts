@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { onSnapshot, doc, getDoc } from '../lib/db';
-import { auth, db } from '../lib/firebase';
+import { useState, useEffect } from 'react';
+import api from '../lib/api';
 import { UserProfile } from '../types';
 
 export function useAuth() {
@@ -9,66 +8,69 @@ export function useAuth() {
   const [organization, setOrganization] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const unsubRef = useRef<any>(null);
-  
   const checkAuth = async () => {
     const token = localStorage.getItem('token');
     const userData = JSON.parse(localStorage.getItem('user') || 'null');
     
-    if (token && userData) {
-      setUser(userData);
-      
-      try {
-        const profileSnap = await getDoc(doc(db, 'users', userData.id));
-        if (profileSnap.exists()) {
-          const profileData = profileSnap.data() as UserProfile;
-          setProfile(profileData);
-
-          if (profileData.orgId) {
-            const orgSnap = await getDoc(doc(db, 'organizations', profileData.orgId));
-            if (orgSnap.exists()) {
-              setOrganization(orgSnap.data());
-            }
-          }
-
-          if (!unsubRef.current) {
-            unsubRef.current = onSnapshot(doc(db, 'users', userData.id), (docSnap) => {
-              if (docSnap.exists()) {
-                const updatedProfile = docSnap.data() as UserProfile;
-                setProfile(prev => ({ ...prev, ...updatedProfile }));
-              }
-            });
-          }
-        }
-      } catch (err) {
-        console.error('Auth check failed:', err);
-      } finally {
-        setLoading(false);
-      }
-    } else {
+    if (!token || !userData) {
       setUser(null);
       setProfile(null);
       setOrganization(null);
       setLoading(false);
-      if (unsubRef.current) {
-        unsubRef.current();
-        unsubRef.current = null;
+      return;
+    }
+
+    try {
+      setUser(userData);
+      const res = await api.get('/auth/me');
+      const dbUser = res.data.user;
+      
+      if (dbUser) {
+        // Map DB user to Profile/Organization structure expected by components
+        setProfile({
+          id: dbUser._id,
+          email: dbUser.email,
+          displayName: dbUser.displayName,
+          role: dbUser.role,
+          orgId: dbUser.orgId?._id || dbUser.orgId,
+          setupCompleted: dbUser.setupCompleted,
+          organizationType: dbUser.organizationType
+        });
+
+        if (dbUser.orgId && typeof dbUser.orgId === 'object') {
+          setOrganization(dbUser.orgId);
+        } else if (dbUser.orgId) {
+          // If not populated for some reason
+          const orgRes = await api.get(`/organizations/${dbUser.orgId}`);
+          setOrganization(orgRes.data);
+        }
       }
+    } catch (err) {
+      console.error('Auth check failed:', err);
+      // If unauthorized, clear local storage
+      if ((err as any).response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        setProfile(null);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    window.addEventListener('auth-change', checkAuth);
     checkAuth();
-    
-    return () => {
-      window.removeEventListener('auth-change', checkAuth);
-      if (unsubRef.current) {
-        unsubRef.current();
-        unsubRef.current = null;
-      }
-    };
+    // Re-check auth on storage changes or custom events
+    window.addEventListener('auth-change', checkAuth);
+    return () => window.removeEventListener('auth-change', checkAuth);
   }, []);
 
-  return { user, profile, organization, loading, refreshAuth: checkAuth };
+  return { 
+    user, 
+    profile, 
+    organization, 
+    loading, 
+    refreshAuth: checkAuth 
+  };
 }
