@@ -29,10 +29,26 @@ const OrganizationSchema = new mongoose.Schema({
   type: { type: String, default: 'business' },
   plan: { type: String, default: 'starter' },
   settings: {
-    twilio: { accountSid: String, authToken: String, fromNumber: String },
+    profile: {
+      name: String,
+      industry: String,
+      countryCode: String,
+      timezone: String,
+      logo: String,
+      autoBranding: Boolean,
+      brandName: String
+    },
+    twilio: { 
+      accountSid: String, 
+      authToken: String, 
+      smsFromNumber: String, 
+      whatsappFromNumber: String 
+    },
     whatsapp: { apiKey: String, phoneNumberId: String },
-    voice: { provider: String, apiKey: String },
+    voice: { provider: String, apiKey: String, phoneNumberId: String, elevenLabsKey: String, agentId: String, usePlatformDefault: Boolean },
     email: { apiKey: String, fromEmail: String, fromName: String },
+    notifications: mongoose.Schema.Types.Mixed,
+    security: mongoose.Schema.Types.Mixed
   },
   subscription: {
     status: { type: String, default: 'trial' },
