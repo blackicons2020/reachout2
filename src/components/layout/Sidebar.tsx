@@ -62,7 +62,7 @@ export function Sidebar({ onClose, notifications = [], contactCount = 0 }: { onC
   const { theme, toggleTheme } = useTheme();
   const role = profile?.role || 'owner';
 
-  const unreadCount = notifications.filter(n => (n.memberId === 'all' || n.memberId === user?.uid) && !n.read).length;
+  const unreadCount = notifications.filter(n => (n.memberId === 'all' || n.memberId === user?.id) && !n.read).length;
 
   const isSuperAdmin = role === 'superadmin';
   const isSubscriptionActive = organization?.subscription?.status === 'active' || isSuperAdmin;

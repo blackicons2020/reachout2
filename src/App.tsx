@@ -84,6 +84,14 @@ function AppContent() {
     );
   }
 
+  if (user && !profile) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   if (profile?.setupCompleted === false) {
     return (
       <Routes>

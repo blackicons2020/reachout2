@@ -21,13 +21,22 @@ export function useAuth() {
     }
 
     try {
-      setUser(userData);
       const res = await api.get('/auth/me');
       const dbUser = res.data.user;
       
       if (dbUser) {
-        // Map DB user to Profile/Organization structure expected by components
-        setProfile({
+        // Update user state with fresh data from DB
+        const updatedUser = { 
+          id: dbUser._id, 
+          email: dbUser.email, 
+          displayName: dbUser.displayName, 
+          orgId: dbUser.orgId?._id || dbUser.orgId, 
+          role: dbUser.role 
+        };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        const newProfile: UserProfile = {
           id: dbUser._id,
           email: dbUser.email,
           displayName: dbUser.displayName,
@@ -35,24 +44,28 @@ export function useAuth() {
           orgId: dbUser.orgId?._id || dbUser.orgId,
           setupCompleted: dbUser.setupCompleted,
           organizationType: dbUser.organizationType
-        });
+        };
+        setProfile(newProfile);
 
         if (dbUser.orgId && typeof dbUser.orgId === 'object') {
           setOrganization(dbUser.orgId);
         } else if (dbUser.orgId) {
-          // If not populated for some reason
-          const orgRes = await api.get(`/organizations/${dbUser.orgId}`);
-          setOrganization(orgRes.data);
+          try {
+            const orgRes = await api.get(`/organizations/${dbUser.orgId}`);
+            setOrganization(orgRes.data);
+          } catch (orgErr) {
+            console.error('Failed to fetch organization details:', orgErr);
+          }
         }
       }
     } catch (err) {
-      console.error('Auth check failed:', err);
-      // If unauthorized, clear local storage
+      console.error('Auth synchronization failed:', err);
       if ((err as any).response?.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
         setProfile(null);
+        setOrganization(null);
       }
     } finally {
       setLoading(false);
@@ -61,7 +74,6 @@ export function useAuth() {
 
   useEffect(() => {
     checkAuth();
-    // Re-check auth on storage changes or custom events
     window.addEventListener('auth-change', checkAuth);
     return () => window.removeEventListener('auth-change', checkAuth);
   }, []);

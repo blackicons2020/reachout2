@@ -13,7 +13,7 @@ export default function Notifications({ notifications, onMarkAsRead, onClearAll 
   const { user } = useAuth();
   
   // Filter notifications for this user or "all"
-  const myNotifications = notifications.filter(n => n.memberId === 'all' || n.memberId === user?.uid);
+  const myNotifications = notifications.filter(n => n.memberId === 'all' || n.memberId === user?.id);
 
   return (
     <div className="space-y-8">
