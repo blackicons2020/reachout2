@@ -246,6 +246,19 @@ async function startServer() {
     }
   });
 
+  // --- Outreach Trigger ---
+  app.post('/api/outreach/trigger', authenticateToken, async (req: any, res) => {
+    const { campaignId } = req.body;
+    try {
+      const campaign = await Campaign.findOne({ _id: campaignId, orgId: req.user.orgId });
+      if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+      executeCampaign(campaign).catch(err => console.error('Execution error:', err));
+      res.json({ message: 'Campaign triggered' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // --- Data Routes ---
   const dataHandler = async (req: any, res: any) => {
     try {
@@ -302,23 +315,6 @@ async function startServer() {
   app.all('/api/data/:collection/:id', authenticateToken, dataHandler);
   app.all('/api/:collection', authenticateToken, dataHandler);
   app.all('/api/:collection/:id', authenticateToken, dataHandler);
-
-  // --- Outreach Trigger ---
-
-  app.post('/api/outreach/trigger', authenticateToken, async (req: any, res) => {
-    const { campaignId } = req.body;
-    try {
-      const campaign = await Campaign.findOne({ _id: campaignId, orgId: req.user.orgId });
-      if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
-      
-      // Execute in background
-      executeCampaign(campaign).catch(err => console.error('Execution error:', err));
-      
-      res.json({ message: 'Campaign triggered' });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
-    }
-  });
 
   // --- Billing Webhooks ---
 

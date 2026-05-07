@@ -14,7 +14,7 @@ import { AuthForm } from './components/auth/AuthForm';
 import { CompleteProfile } from './components/auth/CompleteProfile';
 import { Contact, Campaign } from './types';
 import { generateId, cn } from './lib/utils';
-import { Shield, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Shield, CheckCircle2, AlertCircle, Loader2, Copy, Edit2, Trash2 } from 'lucide-react';
 import Reports from './components/reports/Reports';
 import CallLogs from './components/reports/CallLogs';
 import Members from './components/organization/Members';
@@ -112,6 +112,16 @@ function AppContent() {
     }
   };
 
+  const handleDeleteCampaign = async (id: string) => {
+    try {
+      await api.delete(`/campaigns/${id}`);
+      await fetchData();
+      setNotification({ type: 'success', message: 'Campaign deleted successfully' });
+    } catch (err: any) {
+      setNotification({ type: 'error', message: err.message });
+    }
+  };
+
   const handleSaveCampaign = async (data: any) => {
     try {
       let res;
@@ -121,6 +131,7 @@ function AppContent() {
       await fetchData();
       setIsCreatingCampaign(false);
       setEditingCampaign(null);
+      setDuplicateData(null);
       setNotification({ type: 'success', message: 'Campaign updated!' });
     } catch (e: any) {
       setNotification({ type: 'error', message: e.message });
@@ -154,22 +165,53 @@ function AppContent() {
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Name</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Type</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Status</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Schedule</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center">Sent</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                   {campaigns.map(c => (
                     <tr key={c.id || (c as any)._id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                      <td className="px-6 py-4 font-black text-gray-900 dark:text-white">{c.name}</td>
+                      <td className="px-6 py-4">
+                        <div className="font-black text-gray-900 dark:text-white">{c.name}</div>
+                        <div className="text-[10px] text-gray-400 uppercase font-bold truncate max-w-[200px]">{c.message}</div>
+                      </td>
                       <td className="px-6 py-4 text-[10px] font-black uppercase text-gray-500">{c.type}</td>
                       <td className="px-6 py-4">
-                        <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter", c.status === 'completed' ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700")}>{c.status}</span>
+                        <span className={cn(
+                          "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter",
+                          c.status === 'completed' ? "bg-green-100 text-green-700" : 
+                          c.status === 'failed' ? "bg-red-100 text-red-700" :
+                          "bg-blue-100 text-blue-700"
+                        )}>{c.status}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-xs font-bold text-gray-900 dark:text-white">
+                          {c.scheduleAt ? new Date(c.scheduleAt).toLocaleDateString() : 'Now'}
+                        </div>
+                        <div className="text-[10px] text-gray-400 font-bold">
+                          {c.scheduleAt ? new Date(c.scheduleAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-center font-black text-gray-900 dark:text-white">{c.stats?.sent || 0}</td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => { setDuplicateData({ ...c, name: `Copy of ${c.name}` }); setIsCreatingCampaign(true); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-blue-600" title="Copy">
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => { setEditingCampaign(c); setIsCreatingCampaign(true); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-blue-600" title="Edit">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDeleteCampaign(c.id || (c as any)._id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-gray-400 hover:text-red-600" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {campaigns.length === 0 && (
-                    <tr><td colSpan={4} className="px-6 py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No active campaigns</td></tr>
+                    <tr><td colSpan={6} className="px-6 py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No active campaigns</td></tr>
                   )}
                 </tbody>
               </table>
