@@ -12,6 +12,7 @@ import { Billing } from './components/billing/Billing';
 import { Settings } from './components/settings/Settings';
 import { AuthForm } from './components/auth/AuthForm';
 import { CompleteProfile } from './components/auth/CompleteProfile';
+import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { Contact, Campaign } from './types';
 import { generateId, cn } from './lib/utils';
 import { Shield, CheckCircle2, AlertCircle, Loader2, Copy, Edit2, Trash2 } from 'lucide-react';
@@ -234,6 +235,7 @@ function AppContent() {
         <Route path="/notifications" element={<Notifications notifications={[]} />} />
         <Route path="/billing" element={<Billing />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/superadmin" element={<SuperAdminDashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 

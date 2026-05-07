@@ -131,6 +131,31 @@ const Contact = mongoose.model('Contact', ContactSchema);
 const Campaign = mongoose.model('Campaign', CampaignSchema);
 const Interaction = mongoose.model('Interaction', InteractionSchema);
 
+const LogSchema = new mongoose.Schema({
+  message: String,
+  level: { type: String, default: 'info' },
+  timestamp: { type: Number, default: Date.now },
+  metadata: mongoose.Schema.Types.Mixed
+}, { timestamps: true });
+
+const SystemConfigSchema = new mongoose.Schema({
+  maintenanceMode: { type: Boolean, default: false },
+  allowedRegistration: { type: Boolean, default: true },
+  updatedAt: { type: Number, default: Date.now }
+}, { timestamps: true });
+
+const Log = mongoose.model('Log', LogSchema);
+const SystemConfig = mongoose.model('SystemConfig', SystemConfigSchema);
+
+async function createLog(message: string, level = 'info', metadata = {}) {
+  try {
+    const log = new Log({ message, level, metadata });
+    await log.save();
+  } catch (err) {
+    console.error('Log error:', err);
+  }
+}
+
 // --- Auth Middleware ---
 
 const authenticateToken = (req: any, res: any, next: any) => {
@@ -144,6 +169,11 @@ const authenticateToken = (req: any, res: any, next: any) => {
     req.user = user;
     next();
   });
+};
+
+const requireSuperAdmin = (req: any, res: any, next: any) => {
+  if (req.user?.role !== 'superadmin') return res.status(403).json({ message: 'SuperAdmin access required' });
+  next();
 };
 
 // --- Server Implementation ---
@@ -401,6 +431,68 @@ async function startServer() {
     } catch (error) {
       console.error('[Twilio Webhook] Error:', error);
       res.status(500).send('Error');
+    }
+  });
+
+  // --- Admin Routes ---
+
+  app.get('/api/admin/organizations', authenticateToken, requireSuperAdmin, async (req, res) => {
+    try {
+      const orgs = await Organization.find().sort({ createdAt: -1 });
+      res.json(orgs);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/admin/organizations/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
+    try {
+      const org = await Organization.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      await createLog(`Updated organization: ${org?.name}`, 'info', { orgId: req.params.id, updates: req.body });
+      res.json(org);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/admin/users', authenticateToken, requireSuperAdmin, async (req, res) => {
+    try {
+      const users = await User.find().sort({ createdAt: -1 });
+      res.json(users);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/admin/logs', authenticateToken, requireSuperAdmin, async (req, res) => {
+    try {
+      const logs = await Log.find().sort({ timestamp: -1 }).limit(100);
+      res.json(logs);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/admin/config', authenticateToken, requireSuperAdmin, async (req, res) => {
+    try {
+      let config = await SystemConfig.findOne();
+      if (!config) {
+        config = new SystemConfig();
+        await config.save();
+      }
+      res.json(config);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/admin/config', authenticateToken, requireSuperAdmin, async (req, res) => {
+    try {
+      const config = await SystemConfig.findOneAndUpdate({}, req.body, { new: true, upsert: true });
+      await createLog(`System configuration updated`, 'warning', req.body);
+      res.json(config);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 
