@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Tag, MapPin, Save, Loader2 } from 'lucide-react';
+import { X, User, Phone, Tag, MapPin, Save, Loader2, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Contact } from '@/types';
 
@@ -15,14 +15,10 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
   const [lastName, setLastName] = useState(contact?.lastName || '');
   const [phone, setPhone] = useState(contact?.phone || '');
   const [city, setCity] = useState(contact?.city || '');
+  const [location, setLocation] = useState(contact?.location || '');
   const [tags, setTags] = useState<string>(contact?.tags?.join(', ') || '');
   const [status, setStatus] = useState<Contact['status']>(contact?.status || 'active');
   
-  // Specific fields
-  const [location, setLocation] = useState(contact?.location || '');
-  const [source, setSource] = useState(contact?.source || '');
-  const [lga, setLga] = useState(contact?.lga || '');
-  const [ward, setWard] = useState(contact?.ward || '');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -30,12 +26,9 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
     setLastName(contact?.lastName || '');
     setPhone(contact?.phone || '');
     setCity(contact?.city || '');
+    setLocation(contact?.location || '');
     setTags(contact?.tags?.join(', ') || '');
     setStatus(contact?.status || 'active');
-    setLocation(contact?.location || '');
-    setSource(contact?.source || '');
-    setLga(contact?.lga || '');
-    setWard(contact?.ward || '');
     setIsSaving(false);
   }, [contact]);
 
@@ -47,12 +40,9 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
       lastName,
       phone,
       city,
-      tags: tags.split(',').map(t => t.trim()).filter(t => t !== ''),
-      status,
       location,
-      source,
-      lga,
-      ward
+      tags: tags.split(',').map(t => t.trim()).filter(t => t !== ''),
+      status
     });
   };
 
@@ -131,6 +121,22 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
                 </div>
               </div>
               <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Location / Area</label>
+                <div className="relative">
+                  <Map className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="text"
+                    placeholder="e.g. Ikeja"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Status</label>
                 <select 
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium dark:text-white"
@@ -143,52 +149,20 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
                   <option value="customer">Customer</option>
                 </select>
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tags (comma separated)</label>
-              <div className="relative">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="text"
-                  placeholder="VIP, Member, Lead"
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Organization Specific Section */}
-            {(organizationType === 'religious' || organizationType === 'political') && (
-              <div className="p-4 bg-blue-50/50 dark:bg-slate-800/50 rounded-2xl border border-blue-100 dark:border-slate-700 space-y-4 animate-in fade-in slide-in-from-top-2">
-                <div className="grid grid-cols-2 gap-4">
-                  {organizationType === 'religious' ? (
-                    <>
-                      <div className="space-y-1.5">
-                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Location</label>
-                        <input type="text" className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-700 rounded-lg text-xs dark:text-white" value={location} onChange={(e) => setLocation(e.target.value)} />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Source</label>
-                        <input type="text" className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-700 rounded-lg text-xs dark:text-white" value={source} onChange={(e) => setSource(e.target.value)} />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="space-y-1.5">
-                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">LGA</label>
-                        <input type="text" className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-700 rounded-lg text-xs dark:text-white" value={lga} onChange={(e) => setLga(e.target.value)} />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ward</label>
-                        <input type="text" className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-700 rounded-lg text-xs dark:text-white" value={ward} onChange={(e) => setWard(e.target.value)} />
-                      </div>
-                    </>
-                  )}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tags</label>
+                <div className="relative">
+                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="text"
+                    placeholder="VIP, Member"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
+                  />
                 </div>
               </div>
-            )}
+            </div>
           </form>
         </div>
 
