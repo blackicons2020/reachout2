@@ -78,6 +78,7 @@ const CampaignSchema = new mongoose.Schema({
   message: String,
   targetGroups: [String],
   targetTags: [String],
+  targetCity: String,
   scheduleAt: Number,
   scheduleTimes: [String],
   lastRunAt: Number,
@@ -436,9 +437,16 @@ async function startServer() {
       if (!org) return;
 
       const contacts = await Contact.find({ orgId: org._id });
+      const isAllContacts = campaign.targetGroups?.includes('All Contacts');
       let targetContacts = contacts;
-      if (campaign.targetGroups && !campaign.targetGroups.includes('All Contacts')) {
-        targetContacts = contacts.filter(c => c.groups.some(g => campaign.targetGroups.includes(g)));
+      
+      if (!isAllContacts) {
+        targetContacts = contacts.filter(c => {
+          const inGroup = campaign.targetGroups?.some(g => c.groups?.includes(g));
+          const hasTag = campaign.targetTags?.some(t => c.tags?.includes(t));
+          const inCity = campaign.targetCity && c.city?.toLowerCase().includes(campaign.targetCity.toLowerCase());
+          return inGroup || hasTag || inCity;
+        });
       }
 
       let sentCount = 0;

@@ -201,8 +201,8 @@ function AppContent() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center font-black text-gray-900 dark:text-white text-xs">{c.stats?.sent || 0}</td>
-                        <td className="px-6 py-4 text-center font-black text-green-600 text-xs">{c.stats?.delivered || 0}</td>
-                        <td className="px-6 py-4 text-center font-black text-red-600 text-xs">{c.stats?.failed || 0}</td>
+                        <td className="px-6 py-4 text-center font-black text-green-600 text-sm">{c.stats?.delivered || 0}</td>
+                        <td className="px-6 py-4 text-center font-black text-red-600 text-sm">{c.stats?.failed || 0}</td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button onClick={() => { setDuplicateData({ ...c, name: `Copy of ${c.name}` }); setIsCreatingCampaign(true); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-blue-600" title="Copy">

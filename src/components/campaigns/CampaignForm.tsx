@@ -49,6 +49,8 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
   const [interval, setInterval] = useState(initialData?.recurring?.interval || 1);
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>(initialData?.recurring?.daysOfWeek || []);
   const [dayOfMonth, setDayOfMonth] = useState(initialData?.recurring?.dayOfMonth || 1);
+  const [targetTags, setTargetTags] = useState<string[]>(initialData?.targetTags || []);
+  const [targetCity, setTargetCity] = useState(initialData?.targetCity || '');
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleAIGenerate = async () => {
@@ -258,39 +260,77 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
               )}
               */}
 
-            <div className="space-y-1.5">
+            <div className="space-y-4">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Target Audience</label>
-              <div className="flex flex-wrap gap-2">
-                {['All Contacts', ...availableGroups].map(group => (
+              
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
                   <button 
-                    key={group}
                     type="button"
-                    onClick={() => {
-                      if (group === 'All Contacts') {
-                        setTargetGroups(['All Contacts']);
-                        return;
-                      }
-                      const newGroups = targetGroups.filter(g => g !== 'All Contacts');
-                      if (newGroups.includes(group)) {
-                        setTargetGroups(newGroups.filter(g => g !== group));
-                      } else {
-                        setTargetGroups([...newGroups, group]);
-                      }
-                    }}
+                    onClick={() => setTargetGroups(['All Contacts'])}
                     className={cn(
                       "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all",
-                      targetGroups.includes(group) 
+                      targetGroups.includes('All Contacts') 
                         ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100 dark:shadow-none" 
                         : "bg-white dark:bg-gray-950 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 hover:border-blue-300"
                     )}
                   >
-                    {group}
+                    All Contacts
                   </button>
-                ))}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Filter by Groups</label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableGroups.filter(g => g !== 'All Contacts').map(group => (
+                      <button 
+                        key={group}
+                        type="button"
+                        onClick={() => {
+                          const newGroups = targetGroups.filter(g => g !== 'All Contacts');
+                          if (newGroups.includes(group)) setTargetGroups(newGroups.filter(g => g !== group));
+                          else setTargetGroups([...newGroups, group]);
+                        }}
+                        className={cn(
+                          "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all",
+                          targetGroups.includes(group) && !targetGroups.includes('All Contacts')
+                            ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100 dark:shadow-none" 
+                            : "bg-white dark:bg-gray-950 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 hover:border-blue-300"
+                        )}
+                      >
+                        {group}
+                      </button>
+                    ))}
+                    {availableGroups.length === 0 && <p className="text-[10px] text-gray-400 italic">No groups found</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Filter by Tags (comma separated)</label>
+                    <input 
+                      type="text"
+                      placeholder="e.g. VIP, Leader"
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs dark:text-white"
+                      value={targetTags.join(', ')}
+                      onChange={(e) => {
+                        const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t !== '');
+                        setTargetTags(tags);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Filter by City</label>
+                    <input 
+                      type="text"
+                      placeholder="e.g. Lagos"
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs dark:text-white"
+                      value={targetCity}
+                      onChange={(e) => setTargetCity(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
-              {availableGroups.length === 0 && (
-                <p className="text-[10px] text-gray-400 italic">No custom groups found. Add groups to your contacts to see them here.</p>
-              )}
             </div>
 
             <div className="space-y-3">
@@ -458,6 +498,8 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
                 name, 
                 message, 
                 targetGroups, 
+                targetTags,
+                targetCity,
                 schedule, 
                 scheduleDate, 
                 scheduleTimes, 

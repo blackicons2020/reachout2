@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, Tag, Users, Save } from 'lucide-react';
+import { X, User, Phone, Mail, Tag, Users, Save, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Contact } from '@/types';
 
