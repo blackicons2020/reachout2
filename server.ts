@@ -26,7 +26,7 @@ const OrganizationSchema = new mongoose.Schema({
   country: String,
   defaultCountryCode: String,
   ownerId: String,
-  type: { type: String, default: 'business' },
+  type: { type: String, enum: ['religious', 'political', 'government', 'business', 'academic', 'nonprofit', 'education', 'others'], default: 'business' },
   plan: { type: String, default: 'starter' },
   settings: {
     profile: {
@@ -66,6 +66,7 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, default: 'owner' },
   displayName: String,
   photoURL: String,
+  organizationType: String,
   setupCompleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
@@ -82,6 +83,8 @@ const ContactSchema = new mongoose.Schema({
   customFields: mongoose.Schema.Types.Mixed,
   notes: String,
   status: { type: String, default: 'active' },
+  engagementScore: { type: Number, default: 0 },
+  organizationType: String,
   lastContactedAt: Number,
   createdAt: { type: Number, default: Date.now }
 }, { timestamps: true });
@@ -284,6 +287,7 @@ async function startServer() {
       
       await User.findByIdAndUpdate(req.user.userId, {
         orgId: organization._id,
+        organizationType: organization.type,
         setupCompleted: true
       });
       
@@ -415,7 +419,21 @@ async function startServer() {
         return res.send('<Response></Response>');
       }
 
-      const prompt = `You are an autonomous assistant for "${org.name}". Contact (${From}) replied: "${Body}". Generate a helpful, polite response. Return ONLY the response message.`;
+      const tones: any = {
+        religious: 'warm, welcoming, spiritual, and compassionate',
+        political: 'persuasive, mobilizing, confident, and action-oriented',
+        government: 'informative, professional, trustworthy, and clear',
+        business: 'professional, persuasive, and customer-focused',
+        academic: 'educational, supportive, and professional'
+      };
+      const tone = tones[org.type as string] || 'professional and helpful';
+
+      const prompt = `You are an AI assistant for "${org.name}" (Type: ${org.type}). 
+      Tone: ${tone}.
+      Contact (${From}) replied: "${Body}". 
+      Generate a helpful, polite response that aligns with the organization's mission. 
+      Return ONLY the response message.`;
+
       const aiResponse = await ai.models.generateContent({ model: "gemini-1.5-flash", contents: prompt });
       const replyText = aiResponse.text?.trim() || "Thank you for your message.";
 
@@ -491,6 +509,37 @@ async function startServer() {
       const config = await SystemConfig.findOneAndUpdate({}, req.body, { new: true, upsert: true });
       await createLog(`System configuration updated`, 'warning', req.body);
       res.json(config);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/organizations/recalculate-scores', authenticateToken, async (req: any, res) => {
+    try {
+      const orgId = req.user.orgId;
+      if (!orgId) return res.status(400).json({ message: 'No organization linked to user' });
+      
+      const contacts = await Contact.find({ orgId });
+      const interactions = await Interaction.find({ orgId });
+
+      for (const contact of contacts) {
+        const contactInteractions = interactions.filter(i => i.contactId?.toString() === contact._id.toString());
+        const inbound = contactInteractions.filter(i => i.direction === 'inbound').length;
+        const total = contactInteractions.length;
+        
+        let score = contact.engagementScore || 0;
+        if (total > 0) {
+          score = Math.round(Math.min(100, (inbound / total) * 100 + (total * 2)));
+        }
+
+        let status = contact.status;
+        if (score > 70) status = 'engaged';
+        else if (score < 20 && total > 0) status = 'cold';
+
+        await Contact.findByIdAndUpdate(contact._id, { engagementScore: score, status });
+      }
+
+      res.json({ message: 'Engagement scores updated' });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

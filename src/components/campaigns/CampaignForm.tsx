@@ -15,7 +15,7 @@ import {
   Mail
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { geminiService } from '../../services/geminiService';
+import { aiService } from '../../services/aiService';
 
 interface CampaignFormProps {
   onSave: (campaign: any) => void;
@@ -54,13 +54,10 @@ export function CampaignForm({ onSave, onClose, initialData, isDuplicating, avai
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleAIGenerate = async () => {
-    if (!name) {
-      // For now we'll just return, in a real app we'd show a toast
-      return;
-    }
+    if (!name) return;
     setIsGenerating(true);
     try {
-      const generated = await geminiService.generateCampaignMessage(name, type, organizationType);
+      const generated = await aiService.generateMessage(organizationType || 'business', `Create a campaign message for: ${name}`, { orgName: brandName });
       setMessage(generated);
     } catch (error: any) {
       alert(error.message);

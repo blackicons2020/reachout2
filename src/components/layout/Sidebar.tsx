@@ -158,11 +158,15 @@ export function Sidebar({ onClose, notifications = [], contactCount = 0 }: { onC
                 if (item.name === 'Contacts') {
                   if (organization?.type === 'religious') displayName = 'Souls Database';
                   else if (organization?.type === 'political') displayName = 'Voter Database';
+                  else if (organization?.type === 'government') displayName = 'Citizens Database';
+                  else if (organization?.type === 'business') displayName = 'Customers';
+                  else if (organization?.type === 'academic') displayName = 'Students Database';
                 } else if (item.name === 'Campaigns') {
                   if (organization?.type === 'religious') displayName = 'Outreach';
                   else if (organization?.type === 'political') displayName = 'Engagements';
-                  else if (organization?.type === 'nonprofit') displayName = 'Engagements';
-                  else if (organization?.type === 'education') displayName = 'Engagements';
+                  else if (organization?.type === 'government') displayName = 'Public Engagements';
+                  else if (organization?.type === 'business') displayName = 'Engagements';
+                  else if (organization?.type === 'academic') displayName = 'Engagements';
                 }
 
                 return (

@@ -16,11 +16,10 @@ import { Logo } from '../layout/Logo';
 
 const ORG_TYPES = [
   { label: 'Religious Organization', value: 'religious' },
-  { label: 'Non-profit/NGO', value: 'nonprofit' },
-  { label: 'Education', value: 'education' },
-  { label: 'Business', value: 'business' },
   { label: 'Political Organization', value: 'political' },
-  { label: 'Others', value: 'others' }
+  { label: 'Government Agency', value: 'government' },
+  { label: 'Business/Commercial', value: 'business' },
+  { label: 'Academic Institution', value: 'academic' }
 ];
 
 export function CompleteProfile() {

@@ -122,6 +122,9 @@ export function ContactList({
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {organizationType === 'religious' ? 'Souls Database' : 
              organizationType === 'political' ? 'Voter Database' : 
+             organizationType === 'government' ? 'Citizens Database' :
+             organizationType === 'business' ? 'Customers' :
+             organizationType === 'academic' ? 'Students Database' :
              'Contacts'}
           </h1>
           <p className="text-gray-500 dark:text-gray-400">Manage your organization's contact list and data.</p>

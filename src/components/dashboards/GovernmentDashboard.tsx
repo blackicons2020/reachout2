@@ -5,14 +5,14 @@ import { Link } from 'react-router-dom';
 import { 
   Users, 
   Send, 
-  ShoppingBag, 
-  TrendingUp, 
+  Building2, 
+  MapPin, 
   Clock, 
   ArrowRight,
   Plus,
-  Tag,
-  BarChart3,
-  PieChart as PieChartIcon
+  Bell,
+  ShieldAlert,
+  Info
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -22,9 +22,8 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
+  LineChart,
+  Line
 } from 'recharts';
 import { cn } from '@/lib/utils';
 
@@ -37,11 +36,11 @@ const StatCard = ({ title, value, subValue, icon: Icon, color }: any) => (
     </div>
     <p className="text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-widest">{title}</p>
     <h3 className="text-3xl font-black text-gray-900 dark:text-white mt-1 tracking-tight">{value}</h3>
-    <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-2 uppercase tracking-wide">{subValue}</p>
+    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mt-2 uppercase tracking-wide">{subValue}</p>
   </div>
 );
 
-export function BusinessDashboard({ campaigns = [] }: { campaigns?: any[] }) {
+export function GovernmentDashboard({ campaigns = [] }: { campaigns?: any[] }) {
   const { profile, organization } = useAuth();
   const [contacts, setContacts] = useState<any[]>([]);
 
@@ -52,7 +51,7 @@ export function BusinessDashboard({ campaigns = [] }: { campaigns?: any[] }) {
           const res = await api.get('/contacts');
           setContacts(res.data);
         } catch (err) {
-          console.error('BusinessDashboard fetch error:', err);
+          console.error('GovernmentDashboard fetch error:', err);
         }
       }
     };
@@ -64,26 +63,26 @@ export function BusinessDashboard({ campaigns = [] }: { campaigns?: any[] }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <ShoppingBag className="w-4 h-4 text-blue-600" />
-            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Growth Engine</span>
+            <Building2 className="w-4 h-4 text-indigo-600" />
+            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Public Service Portal</span>
           </div>
-          <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">Business Dashboard</h1>
-          <p className="text-gray-500 dark:text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-1">Driving {organization?.name}'s Customer Engagement</p>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">Government Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-1">Facilitating {organization?.name}'s Citizen Communication</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-5 py-2.5 bg-blue-600 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center gap-2">
+          <button className="px-5 py-2.5 bg-indigo-600 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all flex items-center gap-2">
             <Plus className="w-4 h-4" />
-            New Promotion
+            New Public Notice
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Customers', path: '/contacts', icon: Users, color: 'bg-blue-500' },
-          { label: 'Engagements', path: '/campaigns', icon: Send, color: 'bg-emerald-500' },
-          { label: 'Promotions', path: '/campaigns', icon: Tag, color: 'bg-amber-500' },
-          { label: 'Analytics', path: '/reports', icon: BarChart3, color: 'bg-purple-500' },
+          { label: 'Citizens Database', path: '/contacts', icon: Users, color: 'bg-indigo-500' },
+          { label: 'Public Engagements', path: '/campaigns', icon: Send, color: 'bg-blue-500' },
+          { label: 'Emergency Alerts', path: '/campaigns', icon: ShieldAlert, color: 'bg-red-500' },
+          { label: 'Civic Campaigns', path: '/campaigns', icon: Info, color: 'bg-teal-500' },
         ].map((action) => (
           <Link 
             key={action.label}
@@ -96,61 +95,61 @@ export function BusinessDashboard({ campaigns = [] }: { campaigns?: any[] }) {
               </div>
               <span className="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">{action.label}</span>
             </div>
-            <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
+            <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 transition-colors" />
           </Link>
         ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard 
-          title="Total Customers" 
+          title="Citizens Reached" 
           value={contacts.length.toLocaleString()} 
-          subValue={`+${contacts.filter(c => Date.now() - (c.createdAt || 0) < 7 * 24 * 60 * 60 * 1000).length} new this week`} 
+          subValue="Across all regions" 
           icon={Users} 
+          color="bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" 
+        />
+        <StatCard 
+          title="Active Notices" 
+          value={campaigns.filter(c => c.status === 'sending' || c.status === 'scheduled').length} 
+          subValue="Current public announcements" 
+          icon={Bell} 
           color="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" 
         />
         <StatCard 
-          title="Campaign Performance" 
-          value="94%" 
-          subValue="High delivery & open rate" 
-          icon={TrendingUp} 
-          color="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" 
-        />
-        <StatCard 
-          title="Active Promotions" 
-          value={campaigns.filter(c => c.status === 'sending').length} 
-          subValue="Live engagement campaigns" 
-          icon={Tag} 
-          color="bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" 
+          title="Regional Coverage" 
+          value="92%" 
+          subValue="High engagement in 12/13 districts" 
+          icon={MapPin} 
+          color="bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400" 
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
-          <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-8">Sales & Engagement</h3>
+          <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-8">Public Engagement Trend</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={[]}>
+              <LineChart data={[]}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-gray-100 dark:text-gray-800" />
                 <XAxis dataKey="name" hide />
                 <YAxis hide />
                 <Tooltip />
-                <Bar dataKey="sent" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={32} />
-              </BarChart>
+                <Line type="monotone" dataKey="sent" stroke="#4f46e5" strokeWidth={4} dot={false} />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
-          <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-8">Marketing Modules</h3>
+          <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-8">Service Modules</h3>
           <div className="space-y-4">
             {[
-              { label: 'Customer CRM', status: 'Updated', icon: Users, color: 'text-blue-500' },
-              { label: 'Engagement Campaigns', status: 'Active', icon: Send, color: 'text-emerald-500' },
-              { label: 'Customer Segmentation', status: 'Smart', icon: PieChartIcon, color: 'text-purple-500' },
-              { label: 'Marketing Analytics', status: 'Insightful', icon: TrendingUp, color: 'text-blue-600' }
+              { label: 'Public Announcements', status: 'Active', icon: Send, color: 'text-indigo-500' },
+              { label: 'Emergency Notifications', status: 'Ready', icon: ShieldAlert, color: 'text-red-500' },
+              { label: 'Feedback Collection', status: 'Ongoing', icon: Clock, color: 'text-blue-500' },
+              { label: 'Civic Campaigns', status: 'Scheduled', icon: Info, color: 'text-teal-500' }
             ].map((module) => (
-              <div key={module.label} className="flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-950 rounded-2xl border border-gray-50 dark:border-gray-900 hover:border-blue-200 dark:hover:border-blue-900 transition-colors">
+              <div key={module.label} className="flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-950 rounded-2xl border border-gray-50 dark:border-gray-900 hover:border-indigo-200 dark:hover:border-indigo-900 transition-colors">
                 <div className="flex items-center gap-4">
                   <module.icon className={cn("w-5 h-5", module.color)} />
                   <span className="text-sm font-bold text-gray-900 dark:text-white">{module.label}</span>

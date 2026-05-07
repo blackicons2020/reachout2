@@ -24,7 +24,7 @@ import Inbox from './components/inbox/Inbox';
 import { ThemeProvider } from './hooks/useTheme';
 import { ReligiousDashboard } from './components/dashboards/ReligiousDashboard';
 import { PoliticalDashboard } from './components/dashboards/PoliticalDashboard';
-import { NonProfitDashboard } from './components/dashboards/NonProfitDashboard';
+import { GovernmentDashboard } from './components/dashboards/GovernmentDashboard';
 import { BusinessDashboard } from './components/dashboards/BusinessDashboard';
 import { EducationDashboard } from './components/dashboards/EducationDashboard';
 import api from './lib/api';
@@ -146,8 +146,8 @@ function AppContent() {
           isSuperAdmin ? <Navigate to="/superadmin" /> : (canAccessCoreFeatures ? (
             organization?.type === 'religious' ? <ReligiousDashboard campaigns={campaigns} /> :
             organization?.type === 'political' ? <PoliticalDashboard campaigns={campaigns} /> :
-            organization?.type === 'nonprofit' ? <NonProfitDashboard campaigns={campaigns} /> :
-            organization?.type === 'education' ? <EducationDashboard campaigns={campaigns} /> :
+            organization?.type === 'government' ? <GovernmentDashboard campaigns={campaigns} /> :
+            organization?.type === 'academic' ? <EducationDashboard campaigns={campaigns} /> :
             organization?.type === 'business' ? <BusinessDashboard campaigns={campaigns} /> :
             <Dashboard campaigns={campaigns} />
           ) : <Navigate to="/billing" />)
@@ -157,7 +157,7 @@ function AppContent() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Campaigns</h1>
+                <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{labels.campaigns}</h1>
                 <p className="text-gray-500 font-bold uppercase text-[10px] tracking-widest mt-0.5">Manage outreach efforts</p>
               </div>
               <button onClick={() => setIsCreatingCampaign(true)} className="px-5 py-2.5 bg-blue-600 text-white font-black uppercase text-xs tracking-widest rounded-xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all">New Campaign</button>
