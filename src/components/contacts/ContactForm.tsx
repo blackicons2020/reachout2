@@ -15,7 +15,7 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
   const [lastName, setLastName] = useState(contact?.lastName || '');
   const [phone, setPhone] = useState(contact?.phone || '');
   const [city, setCity] = useState(contact?.city || '');
-  const [location, setLocation] = useState(contact?.location || '');
+  const [area, setArea] = useState(contact?.location || ''); // Using location field for Area
   const [tags, setTags] = useState<string>(contact?.tags?.join(', ') || '');
   const [status, setStatus] = useState<Contact['status']>(contact?.status || 'active');
   
@@ -26,7 +26,7 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
     setLastName(contact?.lastName || '');
     setPhone(contact?.phone || '');
     setCity(contact?.city || '');
-    setLocation(contact?.location || '');
+    setArea(contact?.location || '');
     setTags(contact?.tags?.join(', ') || '');
     setStatus(contact?.status || 'active');
     setIsSaving(false);
@@ -40,7 +40,7 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
       lastName,
       phone,
       city,
-      location,
+      location: area, // Mapping Area to the location field in the DB
       tags: tags.split(',').map(t => t.trim()).filter(t => t !== ''),
       status
     });
@@ -61,7 +61,6 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
 
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           <form id="contact-form" onSubmit={handleSubmit} className="space-y-6">
-            {/* Name Section */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">First Name</label>
@@ -90,7 +89,6 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
               </div>
             </div>
 
-            {/* Contact Details */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Phone Number</label>
               <div className="relative">
@@ -108,7 +106,7 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">City</label>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">City / Town</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input 
@@ -121,15 +119,15 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Location / Area</label>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Area</label>
                 <div className="relative">
                   <Map className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input 
                     type="text"
                     placeholder="e.g. Ikeja"
                     className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm dark:text-white"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
                   />
                 </div>
               </div>

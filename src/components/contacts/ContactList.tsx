@@ -50,7 +50,7 @@ export function ContactList({
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'lastContacted' | 'status' | 'location'>('createdAt');
+  const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'lastContacted' | 'status' | 'city' | 'area'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Filter states
@@ -65,7 +65,7 @@ export function ContactList({
       const matchesSearch = `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         contact.phone.includes(searchTerm) ||
         contact.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.location?.toLowerCase().includes(searchTerm.toLowerCase());
+        contact.location?.toLowerCase().includes(searchTerm.toLowerCase()); // Location field is used for Area
       
       const matchesStatus = statusFilter === 'all' || contact.status === statusFilter;
       const matchesTag = tagFilter === 'all' || (contact.tags || []).includes(tagFilter);
@@ -82,8 +82,10 @@ export function ContactList({
         comparison = (a.lastContactedAt || 0) - (b.lastContactedAt || 0);
       } else if (sortBy === 'status') {
         comparison = (a.status || '').localeCompare(b.status || '');
-      } else if (sortBy === 'location') {
-        comparison = `${a.city || ''} ${a.location || ''}`.localeCompare(`${b.city || ''} ${b.location || ''}`);
+      } else if (sortBy === 'city') {
+        comparison = (a.city || '').localeCompare(b.city || '');
+      } else if (sortBy === 'area') {
+        comparison = (a.location || '').localeCompare(b.location || '');
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
@@ -181,7 +183,8 @@ export function ContactList({
                 <th className="px-6 py-3 w-10"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked={selectedContacts.length === filteredAndSortedContacts.length && filteredAndSortedContacts.length > 0} onChange={toggleSelectAll} /></th>
                 <th className="px-6 py-3"><button onClick={() => toggleSort('name')} className="flex items-center gap-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-blue-600">Name {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}</button></th>
                 <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</th>
-                <th className="px-6 py-3"><button onClick={() => toggleSort('location')} className="flex items-center gap-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-blue-600">Location {sortBy === 'location' && (sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}</button></th>
+                <th className="px-6 py-3"><button onClick={() => toggleSort('city')} className="flex items-center gap-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-blue-600">City / Town {sortBy === 'city' && (sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}</button></th>
+                <th className="px-6 py-3"><button onClick={() => toggleSort('area')} className="flex items-center gap-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-blue-600">Area {sortBy === 'area' && (sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}</button></th>
                 <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</th>
                 <th className="px-6 py-3"><button onClick={() => toggleSort('status')} className="flex items-center gap-1 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-blue-600">Status {sortBy === 'status' && (sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}</button></th>
                 <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
@@ -198,12 +201,8 @@ export function ContactList({
                     </button>
                   </td>
                   <td className="px-6 py-4 text-gray-600 dark:text-gray-400 font-medium">{contact.phone}</td>
-                  <td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm">
-                    <div className="flex flex-col">
-                      <span className="font-bold">{contact.city || '-'}</span>
-                      <span className="text-[10px] text-gray-400 uppercase tracking-tight">{contact.location || ''}</span>
-                    </div>
-                  </td>
+                  <td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm font-bold">{contact.city || '-'}</td>
+                  <td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm">{contact.location || '-'}</td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
                       {contact.tags.map(tag => <span key={tag} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] rounded-full border border-gray-200 dark:border-gray-600">{tag}</span>)}
