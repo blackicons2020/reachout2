@@ -375,7 +375,7 @@ async function startServer() {
       const cleanTo = To.replace('whatsapp:', '');
       const org = await Organization.findOne({
         $or: [
-          { 'settings.twilio.fromNumber': cleanTo },
+          { 'settings.twilio.smsFromNumber': cleanTo },
           { 'settings.twilio.whatsappFromNumber': cleanTo }
         ]
       });
@@ -476,7 +476,7 @@ async function startServer() {
             message: campaign.message.replace(/{{first_name}}/g, contact.firstName || ''),
             accountSid: org.settings.twilio.accountSid,
             authToken: org.settings.twilio.authToken,
-            from: campaign.type === 'sms' ? org.settings.twilio.fromNumber : org.settings.twilio.fromNumber
+            from: campaign.type === 'sms' ? org.settings.twilio?.smsFromNumber : org.settings.twilio?.whatsappFromNumber
           });
           if (success) sentCount++; else failedCount++;
           
