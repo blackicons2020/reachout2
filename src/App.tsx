@@ -188,7 +188,7 @@ function AppContent() {
                       <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Name</th>
                       <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Type</th>
                       <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Status</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Schedule</th>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Last Run</th>
                       <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center">Sent</th>
                       <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center text-green-600">Delivered</th>
                       <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center text-red-600">Failed</th>
@@ -213,10 +213,10 @@ function AppContent() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-xs font-bold text-gray-900 dark:text-white">
-                            {c.scheduleAt ? new Date(c.scheduleAt).toLocaleDateString() : 'Now'}
+                            {c.lastRunAt ? new Date(c.lastRunAt).toLocaleDateString() : (c.scheduleAt ? new Date(c.scheduleAt).toLocaleDateString() : 'Now')}
                           </div>
                           <div className="text-[10px] text-gray-400 font-bold uppercase">
-                            {c.scheduleAt ? new Date(c.scheduleAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                            {c.lastRunAt ? new Date(c.lastRunAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (c.scheduleAt ? new Date(c.scheduleAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-')}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center font-black text-gray-900 dark:text-white text-xs">{c.stats?.sent || 0}</td>

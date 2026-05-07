@@ -330,7 +330,7 @@ async function startServer() {
           contactId: contact?._id,
           orgId: req.user.orgId,
           type: type || 'sms',
-          status: 'sent',
+          status: 'delivered', // Assume delivered if sendTwilioMessage succeeds
           content: message,
           direction: 'outbound'
         }).save();
@@ -660,6 +660,7 @@ async function startServer() {
       }
 
       let sentCount = 0;
+      let deliveredCount = 0;
       let failedCount = 0;
 
       for (const contact of targetContacts) {
@@ -673,14 +674,20 @@ async function startServer() {
             from: campaign.type === 'whatsapp' ? org.settings.twilio?.whatsappFromNumber : org.settings.twilio?.smsFromNumber,
             defaultCode: org.settings.profile?.countryCode?.replace('+', '') || '234'
           });
-          if (success) sentCount++; else failedCount++;
+          
+          if (success) {
+            sentCount++;
+            deliveredCount++;
+          } else {
+            failedCount++;
+          }
           
           await new Interaction({
             contactId: contact._id,
             campaignId: campaign._id,
             orgId: org._id,
             type: campaign.type,
-            status: success ? 'sent' : 'failed',
+            status: success ? 'delivered' : 'failed',
             content: campaign.message
           }).save();
         } catch (err) {
@@ -690,7 +697,9 @@ async function startServer() {
 
       campaign.status = 'completed';
       campaign.stats.sent = sentCount;
+      campaign.stats.delivered = deliveredCount;
       campaign.stats.failed = failedCount;
+      campaign.lastRunAt = Date.now();
       await campaign.save();
     } catch (error) {
       campaign.status = 'failed';
