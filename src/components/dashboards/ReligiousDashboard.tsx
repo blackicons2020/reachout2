@@ -11,7 +11,8 @@ import {
   ArrowRight,
   Plus,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  Bell
 } from 'lucide-react';
 import { 
   BarChart, 
