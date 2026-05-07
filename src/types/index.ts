@@ -59,13 +59,34 @@ export interface Contact {
   createdAt: number;
   lastContactedAt?: number;
   status?: 'active' | 'inactive' | 'lead' | 'customer' | 'engaged' | 'cold' | 'converted';
-  // Industry specific fields
-  location?: string; // Religious
-  outreachDate?: number; // Religious
-  source?: string; // Religious
-  state?: string; // Political
-  lga?: string; // Political
-  ward?: string; // Political
+  engagementScore?: number;
+
+  // Organization specific fields
+  location?: string;
+  lga?: string;
+  ward?: string;
+  outreachDate?: string;
+  source?: string;
+  prayerRequests?: string;
+  attendanceStatus?: string;
+
+  pollingUnit?: string;
+  votingInterest?: string;
+  participationHistory?: string;
+
+  occupation?: string;
+  community?: string;
+  feedbackHistory?: string;
+
+  customerType?: string;
+  lastInteraction?: string;
+  purchaseHistory?: string;
+
+  department?: string;
+  level?: string;
+  faculty?: string;
+  guardianContact?: string;
+  performanceCategory?: string;
 }
 
 export interface Campaign {
