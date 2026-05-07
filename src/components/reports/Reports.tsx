@@ -38,8 +38,7 @@ const StatCard = ({ title, value, subValue, icon: Icon, color }: any) => (
   </div>
 );
 
-export default function Reports({ campaigns: propCampaigns }: { campaigns?: any[] }) {
-  const campaigns = propCampaigns || JSON.parse(localStorage.getItem('reachout_campaigns') || '[]');
+export default function Reports({ campaigns = [] }: { campaigns?: any[] }) {
 
   const smsCampaigns = campaigns.filter((c: any) => c.type === 'sms');
   const whatsappCampaigns = campaigns.filter((c: any) => c.type === 'whatsapp');

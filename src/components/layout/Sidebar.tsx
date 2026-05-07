@@ -100,7 +100,7 @@ export function Sidebar({ onClose, notifications = [], contactCount = 0 }: { onC
   })).filter(group => group.items.length > 0);
 
   return (
-    <div className="flex flex-col w-64 bg-gray-900 border-r border-gray-800 transition-all duration-300">
+    <div className="flex flex-col h-full w-64 bg-gray-900 border-r border-gray-800 transition-all duration-300">
       <div className="p-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 flex items-center justify-center shrink-0 rounded-full overflow-hidden">
@@ -131,7 +131,8 @@ export function Sidebar({ onClose, notifications = [], contactCount = 0 }: { onC
         )}
       </div>
       
-      <nav className="flex-1 px-4 py-4 space-y-8 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 px-4 py-4 space-y-8">
         {filteredGroups.map((group) => (
           <div key={group.title} className="space-y-2">
             <div className="flex items-center justify-between px-4">
@@ -236,6 +237,7 @@ export function Sidebar({ onClose, notifications = [], contactCount = 0 }: { onC
           <LogOut className="w-5 h-5" />
           <span className="font-medium text-sm">Logout</span>
         </button>
+        </div>
       </div>
     </div>
   );
