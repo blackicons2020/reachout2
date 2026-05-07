@@ -310,6 +310,59 @@ async function startServer() {
     }
   });
 
+  app.post('/api/outreach/send', authenticateToken, async (req: any, res) => {
+    const { type, phoneNumber, message, accountSid, authToken, fromNumber } = req.body;
+    try {
+      const success = await sendTwilioMessage({
+        type: type || 'sms',
+        to: phoneNumber,
+        message,
+        accountSid,
+        authToken,
+        from: fromNumber,
+        defaultCode: '234' // Default to Nigeria if not specified
+      });
+
+      if (success) {
+        // Record as an interaction
+        const contact = await Contact.findOne({ phone: phoneNumber, orgId: req.user.orgId });
+        await new Interaction({
+          contactId: contact?._id,
+          orgId: req.user.orgId,
+          type: type || 'sms',
+          status: 'sent',
+          content: message,
+          direction: 'outbound'
+        }).save();
+
+        res.json({ success: true, message: 'Message sent successfully' });
+      } else {
+        res.status(500).json({ success: false, message: 'Failed to send message via Twilio' });
+      }
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post('/api/outreach/test-twilio', authenticateToken, async (req: any, res) => {
+    const { accountSid, authToken } = req.body;
+    try {
+      const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`, {
+        headers: { 'Authorization': `Basic ${auth}` }
+      });
+
+      if (response.ok) {
+        res.json({ success: true, message: 'Twilio connection successful' });
+      } else {
+        const error = await response.json();
+        res.status(400).json({ success: false, message: error.message || 'Invalid Twilio credentials' });
+      }
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
   // --- Data Routes ---
   const dataHandler = async (req: any, res: any) => {
     try {
@@ -655,7 +708,10 @@ async function startServer() {
   };
 
   const sendTwilioMessage = async ({ type, to, message, accountSid, authToken, from, defaultCode }: any) => {
-    if (!accountSid || !authToken || !from) return false;
+    if (!accountSid || !authToken || !from) {
+      await createLog('Twilio configuration missing', 'error', { accountSid: !!accountSid, authToken: !!authToken, from: !!from });
+      return false;
+    }
     const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
     
     const cleanTo = formatPhone(to, defaultCode);
@@ -675,10 +731,12 @@ async function startServer() {
       if (!response.ok) {
         const err = await response.json();
         console.error('[Twilio] Error:', err.message);
+        await createLog(`Twilio Send Error: ${err.message}`, 'error', { to: cleanTo, from: cleanFrom, type });
       }
       return response.ok;
-    } catch (err) {
+    } catch (err: any) {
       console.error('[Twilio] Fetch Error:', err);
+      await createLog(`Twilio Fetch Error: ${err.message}`, 'error', { to: cleanTo, from: cleanFrom, type });
       return false;
     }
   };

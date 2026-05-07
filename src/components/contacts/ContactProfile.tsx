@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Contact, Interaction } from '@/types';
+import { MessageModal } from './MessageModal';
+import { useState } from 'react';
 
 interface ContactProfileProps {
   contact: Contact;
@@ -25,6 +27,8 @@ interface ContactProfileProps {
 }
 
 export function ContactProfile({ contact, interactions, onClose }: ContactProfileProps) {
+  const [showMessageModal, setShowMessageModal] = useState(false);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-end z-50">
       <div className="bg-white dark:bg-gray-900 w-full max-w-2xl h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l dark:border-gray-800">
@@ -173,7 +177,10 @@ export function ContactProfile({ contact, interactions, onClose }: ContactProfil
         </div>
 
         <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 flex gap-4 mt-auto">
-          <button className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none flex items-center justify-center gap-2">
+          <button 
+            onClick={() => setShowMessageModal(true)}
+            className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none flex items-center justify-center gap-2"
+          >
             <MessageSquare className="w-5 h-5" />
             <span>Send Message</span>
           </button>
@@ -183,6 +190,17 @@ export function ContactProfile({ contact, interactions, onClose }: ContactProfil
           </button> */}
         </div>
       </div>
+
+      {showMessageModal && (
+        <MessageModal 
+          contact={contact} 
+          onClose={() => setShowMessageModal(false)}
+          onSuccess={() => {
+            // Success feedback is handled by modal closing and potentially refresh
+            // You might want to trigger a refresh of interactions here if needed
+          }}
+        />
+      )}
     </div>
   );
 }

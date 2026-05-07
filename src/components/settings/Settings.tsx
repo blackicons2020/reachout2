@@ -17,9 +17,11 @@ import {
   Smartphone,
   LogOut,
   Trash2,
-  Download
+  Download,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { outreachService } from '@/services/outreachService';
 
 export function Settings() {
   const { profile, refreshAuth } = useAuth();
@@ -27,6 +29,7 @@ export function Settings() {
   const [editingIntegration, setEditingIntegration] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTesting, setIsTesting] = useState(false);
   
   const [orgSettings, setOrgSettings] = useState<any>({
     profile: { name: '', industry: 'Religious Organization', countryCode: '+234', timezone: '(GMT+01:00) Lagos', logo: '', autoBranding: true, brandName: '' },
@@ -105,6 +108,24 @@ export function Settings() {
       ...prev,
       [key]: { ...prev[key], ...value }
     }));
+  };
+
+  const handleTestTwilio = async () => {
+    if (!orgSettings.twilio?.accountSid || !orgSettings.twilio?.authToken) {
+      setNotification({ type: 'error', message: 'Please enter Account SID and Auth Token first' });
+      return;
+    }
+
+    setIsTesting(true);
+    try {
+      await outreachService.testTwilioConnection(orgSettings.twilio.accountSid, orgSettings.twilio.authToken);
+      setNotification({ type: 'success', message: 'Twilio connection successful!' });
+    } catch (error: any) {
+      setNotification({ type: 'error', message: error.message || 'Twilio connection failed' });
+    } finally {
+      setIsTesting(false);
+      setTimeout(() => setNotification(null), 5000);
+    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -277,9 +298,19 @@ export function Settings() {
                     </div>
                   )}
 
-                  <div className="flex gap-3 pt-4">
-                    <button onClick={() => setEditingIntegration(null)} className="flex-1 px-6 py-3 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-900">Cancel</button>
-                    <button onClick={handleSaveSettings} className="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200">Save Configuration</button>
+                  <div className="flex flex-col md:flex-row gap-3 pt-4">
+                    <button 
+                      onClick={handleTestTwilio} 
+                      disabled={isTesting}
+                      className="flex-1 px-6 py-3 border border-blue-200 dark:border-blue-900/30 text-blue-600 dark:text-blue-400 font-bold rounded-2xl hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-900 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquare className="w-4 h-4" />}
+                      <span>Test Connection</span>
+                    </button>
+                    <div className="flex flex-1 gap-3">
+                      <button onClick={() => setEditingIntegration(null)} className="flex-1 px-6 py-3 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-900">Cancel</button>
+                      <button onClick={handleSaveSettings} className="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200">Save Config</button>
+                    </div>
                   </div>
                 </div>
               ) : (
