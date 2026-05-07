@@ -476,7 +476,8 @@ async function startServer() {
             message: campaign.message.replace(/{{first_name}}/g, contact.firstName || ''),
             accountSid: org.settings.twilio.accountSid,
             authToken: org.settings.twilio.authToken,
-            from: campaign.type === 'whatsapp' ? org.settings.twilio?.whatsappFromNumber : org.settings.twilio?.smsFromNumber
+            from: campaign.type === 'whatsapp' ? org.settings.twilio?.whatsappFromNumber : org.settings.twilio?.smsFromNumber,
+            defaultCode: org.settings.profile?.countryCode?.replace('+', '') || '234'
           });
           if (success) sentCount++; else failedCount++;
           
@@ -503,18 +504,21 @@ async function startServer() {
     }
   };
 
-  const formatPhone = (phone: string) => {
+  const formatPhone = (phone: string, defaultCode = '234') => {
     if (!phone) return '';
-    const clean = phone.replace(/\D/g, '');
-    return phone.startsWith('+') ? phone : `+${clean}`;
+    if (phone.startsWith('+')) return phone;
+    let clean = phone.replace(/\D/g, '');
+    if (clean.startsWith(defaultCode)) return `+${clean}`;
+    if (clean.startsWith('0')) clean = clean.substring(1);
+    return `+${defaultCode}${clean}`;
   };
 
-  const sendTwilioMessage = async ({ type, to, message, accountSid, authToken, from }: any) => {
+  const sendTwilioMessage = async ({ type, to, message, accountSid, authToken, from, defaultCode }: any) => {
     if (!accountSid || !authToken || !from) return false;
     const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
     
-    const cleanTo = formatPhone(to);
-    const cleanFrom = formatPhone(from);
+    const cleanTo = formatPhone(to, defaultCode);
+    const cleanFrom = formatPhone(from, defaultCode);
     
     const twilioTo = type === 'whatsapp' ? `whatsapp:${cleanTo}` : cleanTo;
     const twilioFrom = type === 'whatsapp' ? `whatsapp:${cleanFrom}` : cleanFrom;
