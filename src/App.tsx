@@ -203,7 +203,7 @@ export default function App() {
             <Route path="/*" element={
               <PageWrapper notifications={notifications} contactCount={contacts.length}>
                 <Routes>
-                  <Route path="/" element={isSuperAdmin ? <Navigate to="/superadmin" /> : (canAccessCoreFeatures ? (
+                  <Route index element={isSuperAdmin ? <Navigate to="/superadmin" /> : (canAccessCoreFeatures ? (
                     organization?.type === 'religious' ? <ReligiousDashboard campaigns={campaigns} /> :
                     organization?.type === 'political' ? <PoliticalDashboard campaigns={campaigns} /> :
                     organization?.type === 'nonprofit' ? <NonProfitDashboard campaigns={campaigns} /> :
@@ -211,15 +211,15 @@ export default function App() {
                     organization?.type === 'business' ? <BusinessDashboard campaigns={campaigns} /> :
                     <Dashboard campaigns={campaigns} />
                   ) : <Navigate to="/billing" />)} />
-                  <Route path="/contacts" element={<ContactList contacts={contacts} onAddContact={() => hasReachedLimit ? setNotification({ type: 'error', message: 'Trial limit reached' }) : setIsAddingContact(true)} onEditContact={(c) => { setEditingContact(c); setIsAddingContact(true); }} onDeleteContact={handleDeleteContact} onImportContacts={() => setIsImporting(true)} canManage={isAdmin} organizationType={organization?.type} />} />
-                  <Route path="/campaigns" element={<div className="space-y-8"><div className="flex items-center justify-between"><div><h1 className="text-3xl font-bold text-gray-900 dark:text-white">Campaigns</h1><p className="text-gray-500 dark:text-gray-400 mt-1">Manage outreach campaigns.</p></div><button onClick={() => setIsCreatingCampaign(true)} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-lg">New Campaign</button></div><div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"><table className="w-full text-left"><thead><tr className="border-b border-gray-100 dark:border-gray-800"><th className="py-4 text-[10px] font-bold uppercase text-gray-500">Name</th><th className="py-4 text-[10px] font-bold uppercase text-gray-500">Type</th><th className="py-4 text-[10px] font-bold uppercase text-gray-500">Status</th><th className="py-4 text-[10px] font-bold uppercase text-gray-500 text-center">Sent</th></tr></thead><tbody>{campaigns.map(c => (<tr key={c.id || (c as any)._id} className="border-b border-gray-50 dark:border-gray-800/50"><td className="py-4 font-bold">{c.name}</td><td className="py-4 uppercase text-xs">{c.type}</td><td className="py-4 text-xs"><span className={cn("px-2 py-1 rounded-full", c.status === 'completed' ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600")}>{c.status}</span></td><td className="py-4 text-center font-bold">{c.stats?.sent || 0}</td></tr>))}</tbody></table></div></div>} />
-                  <Route path="/reports" element={<Reports campaigns={campaigns} />} />
-                  <Route path="/calls" element={<CallLogs />} />
-                  <Route path="/organization/members" element={<Members members={members} />} />
-                  <Route path="/inbox" element={<Inbox messages={inbox} />} />
-                  <Route path="/notifications" element={<Notifications notifications={notifications} />} />
-                  <Route path="/billing" element={<Billing />} />
-                  <Route path="/settings" element={<Settings />} />
+                  <Route path="contacts" element={<ContactList contacts={contacts} onAddContact={() => hasReachedLimit ? setNotification({ type: 'error', message: 'Trial limit reached' }) : setIsAddingContact(true)} onEditContact={(c) => { setEditingContact(c); setIsAddingContact(true); }} onDeleteContact={handleDeleteContact} onImportContacts={() => setIsImporting(true)} canManage={isAdmin} organizationType={organization?.type} />} />
+                  <Route path="campaigns" element={<div className="space-y-8"><div className="flex items-center justify-between"><div><h1 className="text-3xl font-bold text-gray-900 dark:text-white">Campaigns</h1><p className="text-gray-500 dark:text-gray-400 mt-1">Manage outreach campaigns.</p></div><button onClick={() => setIsCreatingCampaign(true)} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-lg">New Campaign</button></div><div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"><table className="w-full text-left"><thead><tr className="border-b border-gray-100 dark:border-gray-800"><th className="py-4 text-[10px] font-bold uppercase text-gray-500">Name</th><th className="py-4 text-[10px] font-bold uppercase text-gray-500">Type</th><th className="py-4 text-[10px] font-bold uppercase text-gray-500">Status</th><th className="py-4 text-[10px] font-bold uppercase text-gray-500 text-center">Sent</th></tr></thead><tbody>{campaigns.map(c => (<tr key={c.id || (c as any)._id} className="border-b border-gray-50 dark:border-gray-800/50"><td className="py-4 font-bold">{c.name}</td><td className="py-4 uppercase text-xs">{c.type}</td><td className="py-4 text-xs"><span className={cn("px-2 py-1 rounded-full", c.status === 'completed' ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600")}>{c.status}</span></td><td className="py-4 text-center font-bold">{c.stats?.sent || 0}</td></tr>))}</tbody></table></div></div>} />
+                  <Route path="reports" element={<Reports campaigns={campaigns} />} />
+                  <Route path="calls" element={<CallLogs />} />
+                  <Route path="organization/members" element={<Members members={members} />} />
+                  <Route path="inbox" element={<Inbox messages={inbox} />} />
+                  <Route path="notifications" element={<Notifications notifications={notifications} />} />
+                  <Route path="billing" element={<Billing />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </PageWrapper>

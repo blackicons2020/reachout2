@@ -26,10 +26,29 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
   const [source, setSource] = useState(contact?.source || '');
   const [lga, setLga] = useState(contact?.lga || '');
   const [ward, setWard] = useState(contact?.ward || '');
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    setFirstName(contact?.firstName || '');
+    setLastName(contact?.lastName || '');
+    setPhone(contact?.phone || '');
+    setEmail(contact?.email || '');
+    setCity(contact?.city || '');
+    setState(contact?.state || '');
+    setTags(contact?.tags?.join(', ') || '');
+    setGroups(contact?.groups?.join(', ') || '');
+    setStatus(contact?.status || 'active');
+    setLocation(contact?.location || '');
+    setSource(contact?.source || '');
+    setLga(contact?.lga || '');
+    setWard(contact?.ward || '');
+    setIsSaving(false);
+  }, [contact]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
+    setIsSaving(true);
+    await onSave({
       firstName,
       lastName,
       phone,
@@ -253,10 +272,15 @@ export function ContactForm({ contact, organizationType, onSave, onClose }: Cont
           <button 
             type="submit"
             form="contact-form"
-            className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none flex items-center justify-center gap-2"
+            disabled={isSaving}
+            className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save className="w-4 h-4" />
-            <span>{contact ? 'Update Contact' : 'Save Contact'}</span>
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            <span>{isSaving ? 'Saving...' : (contact ? 'Update Contact' : 'Save Contact')}</span>
           </button>
         </div>
       </div>
