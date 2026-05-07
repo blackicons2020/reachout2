@@ -76,7 +76,7 @@ export function ReligiousDashboard({ campaigns = [] }: { campaigns?: any[] }) {
             <Sparkles className="w-4 h-4 text-amber-500" />
             <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Spiritual Impact Dashboard</span>
           </div>
-          <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">Religious Dashboard</h1>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">Dashboard</h1>
           <p className="text-gray-500 dark:text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-1">Managing {organization?.name}'s Souls & Outreach</p>
         </div>
         <div className="flex items-center gap-3">

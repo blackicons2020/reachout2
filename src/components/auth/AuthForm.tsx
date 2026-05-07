@@ -71,7 +71,7 @@ export function AuthForm({ type }: AuthFormProps) {
     <div className="min-h-screen flex items-center justify-center bg-[#0b0e14] p-4">
       <div className="w-full max-w-[340px] space-y-4">
         <div className="text-center">
-          <Logo className="w-7 h-7 mx-auto mb-3" size={28} />
+          <Logo className="w-7 h-7 mx-auto mb-3 text-gray-500 dark:text-gray-400" size={28} />
           <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
             {type === 'login' ? 'Welcome back' : 'Create your account'}
           </h1>

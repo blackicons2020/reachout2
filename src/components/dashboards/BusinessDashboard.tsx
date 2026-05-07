@@ -67,7 +67,7 @@ export function BusinessDashboard({ campaigns = [] }: { campaigns?: any[] }) {
             <ShoppingBag className="w-4 h-4 text-blue-600" />
             <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Growth Engine</span>
           </div>
-          <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">Business Dashboard</h1>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">Dashboard</h1>
           <p className="text-gray-500 dark:text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-1">Driving {organization?.name}'s Customer Engagement</p>
         </div>
         <div className="flex items-center gap-3">
