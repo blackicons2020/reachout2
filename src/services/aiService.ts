@@ -1,6 +1,22 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY || "");
+let aiInstance: any = null;
+
+const getAI = () => {
+  const key = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!key) {
+    return null;
+  }
+  if (!aiInstance) {
+    try {
+      aiInstance = new GoogleGenAI(key);
+    } catch (e) {
+      console.error("Failed to initialize GoogleGenAI:", e);
+      return null;
+    }
+  }
+  return aiInstance;
+};
 
 export const aiService = {
   getTone: (type?: string) => {
@@ -16,6 +32,9 @@ export const aiService = {
 
   generateMessage: async (orgType: string, purpose: string, context: any) => {
     try {
+      const ai = getAI();
+      if (!ai) throw new Error("AI service not initialized");
+
       const tone = aiService.getTone(orgType);
       const prompt = `You are an AI assistant for a ${orgType} organization. 
       The organization name is "${context.orgName || 'ReachOut'}".
@@ -35,6 +54,9 @@ export const aiService = {
 
   generateFollowUp: async (orgType: string, contact: any, lastMessage: string) => {
     try {
+      const ai = getAI();
+      if (!ai) throw new Error("AI service not initialized");
+
       const tone = aiService.getTone(orgType);
       const prompt = `You are an AI assistant for a ${orgType} organization. 
       Tone: ${tone}.
@@ -86,7 +108,6 @@ export const aiService = {
   },
 
   suggestBestTime: (contact: any) => {
-    // Simulated logic based on interaction history
     return "Tuesday at 10:00 AM";
   },
 
