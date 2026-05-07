@@ -43,6 +43,7 @@ import { PoliticalDashboard } from './components/dashboards/PoliticalDashboard';
 import { NonProfitDashboard } from './components/dashboards/NonProfitDashboard';
 import { BusinessDashboard } from './components/dashboards/BusinessDashboard';
 import { EducationDashboard } from './components/dashboards/EducationDashboard';
+import api from './lib/api';
 
 export default function App() {
   const { user, profile, organization, loading: authLoading, refreshAuth } = useAuth();
@@ -86,7 +87,6 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
-    // Simple polling for real-time feel since we moved away from onSnapshot
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [user, profile?.orgId]);
@@ -190,132 +190,76 @@ export default function App() {
           <Route path="/login" element={!user ? <AuthForm type="login" /> : <Navigate to="/" replace />} />
           <Route path="/signup" element={!user ? <AuthForm type="signup" /> : <Navigate to="/" replace />} />
           
-          {/* Protected Routes */}
-          {user ? (
-            profile?.setupCompleted === false ? (
-              <>
-                <Route path="/complete-profile" element={<CompleteProfile />} />
-                <Route path="*" element={<Navigate to="/complete-profile" replace />} />
-              </>
-            ) : (
-              <Route path="*" element={
-                <PageWrapper notifications={notifications} contactCount={contacts.length}>
-                  <Routes>
-                    <Route path="/" element={isSuperAdmin ? <Navigate to="/superadmin" /> : (canAccessCoreFeatures ? (
-                      organization?.type === 'religious' ? <ReligiousDashboard campaigns={campaigns} /> :
-                      organization?.type === 'political' ? <PoliticalDashboard campaigns={campaigns} /> :
-                      organization?.type === 'nonprofit' ? <NonProfitDashboard campaigns={campaigns} /> :
-                      organization?.type === 'education' ? <EducationDashboard campaigns={campaigns} /> :
-                      organization?.type === 'business' ? <BusinessDashboard campaigns={campaigns} /> :
-                      <Dashboard campaigns={campaigns} />
-                    ) : <Navigate to="/billing" />)} />
-                    <Route 
-                      path="/contacts" 
-                      element={
-                        <ContactList 
-                          contacts={contacts} 
-                          onAddContact={() => {
-                            if (hasReachedLimit) {
-                              setNotification({ type: 'error', message: 'Trial limit reached. Please subscribe.' });
-                              return;
-                            }
-                            setIsAddingContact(true);
-                          }} 
-                          onEditContact={(contact) => {
-                            setEditingContact(contact);
-                            setIsAddingContact(true);
-                          }}
-                          onDeleteContact={handleDeleteContact}
-                          onImportContacts={() => setIsImporting(true)}
-                          canManage={isAdmin}
-                          organizationType={organization?.type}
-                        />
-                      } 
-                    />
-                    <Route path="/campaigns" element={
-                      <div className="space-y-8">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Campaigns</h1>
-                            <p className="text-gray-500 dark:text-gray-400 mt-1">Manage outreach campaigns.</p>
-                          </div>
-                          <button onClick={() => setIsCreatingCampaign(true)} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-lg">New Campaign</button>
-                        </div>
-                        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
-                          <table className="w-full text-left">
-                            <thead>
-                              <tr className="border-b border-gray-100 dark:border-gray-800">
-                                <th className="py-4 text-[10px] font-bold uppercase text-gray-500">Name</th>
-                                <th className="py-4 text-[10px] font-bold uppercase text-gray-500">Type</th>
-                                <th className="py-4 text-[10px] font-bold uppercase text-gray-500">Status</th>
-                                <th className="py-4 text-[10px] font-bold uppercase text-gray-500 text-center">Sent</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {campaigns.map(c => (
-                                <tr key={c.id || (c as any)._id} className="border-b border-gray-50 dark:border-gray-800/50">
-                                  <td className="py-4 font-bold">{c.name}</td>
-                                  <td className="py-4 uppercase text-xs">{c.type}</td>
-                                  <td className="py-4 text-xs">
-                                    <span className={cn(
-                                      "px-2 py-1 rounded-full",
-                                      c.status === 'completed' ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
-                                    )}>{c.status}</span>
-                                  </td>
-                                  <td className="py-4 text-center font-bold">{c.stats?.sent || 0}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    } />
-                    <Route path="/reports" element={<Reports campaigns={campaigns} />} />
-                    <Route path="/calls" element={<CallLogs />} />
-                    <Route path="/organization/members" element={<Members members={members} />} />
-                    <Route path="/inbox" element={<Inbox messages={inbox} />} />
-                    <Route path="/notifications" element={<Notifications notifications={notifications} />} />
-                    <Route path="/billing" element={<Billing />} />
-                    <Route path="/settings" element={<Settings />} />
-                  </Routes>
-                </PageWrapper>
-              } />
-            )
-          ) : (
-            <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Onboarding Flow */}
+          {user && profile?.setupCompleted === false && (
+            <>
+              <Route path="/complete-profile" element={<CompleteProfile />} />
+              <Route path="*" element={<Navigate to="/complete-profile" replace />} />
+            </>
           )}
+
+          {/* Main App Routes */}
+          {user && (profile?.setupCompleted !== false) && (
+            <Route path="/*" element={
+              <PageWrapper notifications={notifications} contactCount={contacts.length}>
+                <Routes>
+                  <Route path="/" element={isSuperAdmin ? <Navigate to="/superadmin" /> : (canAccessCoreFeatures ? (
+                    organization?.type === 'religious' ? <ReligiousDashboard campaigns={campaigns} /> :
+                    organization?.type === 'political' ? <PoliticalDashboard campaigns={campaigns} /> :
+                    organization?.type === 'nonprofit' ? <NonProfitDashboard campaigns={campaigns} /> :
+                    organization?.type === 'education' ? <EducationDashboard campaigns={campaigns} /> :
+                    organization?.type === 'business' ? <BusinessDashboard campaigns={campaigns} /> :
+                    <Dashboard campaigns={campaigns} />
+                  ) : <Navigate to="/billing" />)} />
+                  <Route path="/contacts" element={<ContactList contacts={contacts} onAddContact={() => hasReachedLimit ? setNotification({ type: 'error', message: 'Trial limit reached' }) : setIsAddingContact(true)} onEditContact={(c) => { setEditingContact(c); setIsAddingContact(true); }} onDeleteContact={handleDeleteContact} onImportContacts={() => setIsImporting(true)} canManage={isAdmin} organizationType={organization?.type} />} />
+                  <Route path="/campaigns" element={<div className="space-y-8"><div className="flex items-center justify-between"><div><h1 className="text-3xl font-bold text-gray-900 dark:text-white">Campaigns</h1><p className="text-gray-500 dark:text-gray-400 mt-1">Manage outreach campaigns.</p></div><button onClick={() => setIsCreatingCampaign(true)} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-lg">New Campaign</button></div><div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"><table className="w-full text-left"><thead><tr className="border-b border-gray-100 dark:border-gray-800"><th className="py-4 text-[10px] font-bold uppercase text-gray-500">Name</th><th className="py-4 text-[10px] font-bold uppercase text-gray-500">Type</th><th className="py-4 text-[10px] font-bold uppercase text-gray-500">Status</th><th className="py-4 text-[10px] font-bold uppercase text-gray-500 text-center">Sent</th></tr></thead><tbody>{campaigns.map(c => (<tr key={c.id || (c as any)._id} className="border-b border-gray-50 dark:border-gray-800/50"><td className="py-4 font-bold">{c.name}</td><td className="py-4 uppercase text-xs">{c.type}</td><td className="py-4 text-xs"><span className={cn("px-2 py-1 rounded-full", c.status === 'completed' ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600")}>{c.status}</span></td><td className="py-4 text-center font-bold">{c.stats?.sent || 0}</td></tr>))}</tbody></table></div></div>} />
+                  <Route path="/reports" element={<Reports campaigns={campaigns} />} />
+                  <Route path="/calls" element={<CallLogs />} />
+                  <Route path="/organization/members" element={<Members members={members} />} />
+                  <Route path="/inbox" element={<Inbox messages={inbox} />} />
+                  <Route path="/notifications" element={<Notifications notifications={notifications} />} />
+                  <Route path="/billing" element={<Billing />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </PageWrapper>
+            } />
+          )}
+
+          {/* Catch-all for non-authenticated */}
+          {!user && <Route path="*" element={<Navigate to="/login" replace />} />}
         </Routes>
 
-      {isImporting && (
-        <ContactImport 
-          onImport={handleImportContacts}
-          onClose={() => setIsImporting(false)}
-        />
-      )}
+        {isImporting && (
+          <ContactImport 
+            onImport={handleImportContacts}
+            onClose={() => setIsImporting(false)}
+          />
+        )}
 
-      {isAddingContact && (
-        <ContactForm 
-          contact={editingContact}
-          onSave={handleSaveContact}
-          onClose={() => {
-            setIsAddingContact(false);
-            setEditingContact(null);
-          }}
-        />
-      )}
+        {isAddingContact && (
+          <ContactForm 
+            contact={editingContact}
+            onSave={handleSaveContact}
+            onClose={() => {
+              setIsAddingContact(false);
+              setEditingContact(null);
+            }}
+          />
+        )}
 
-      {isCreatingCampaign && (
-        <CampaignForm 
-          campaign={editingCampaign || duplicateData}
-          onSave={handleSaveCampaign}
-          onClose={() => {
-            setIsCreatingCampaign(false);
-            setEditingCampaign(null);
-            setDuplicateData(null);
-          }}
-          contacts={contacts}
-        />
-      )}
+        {isCreatingCampaign && (
+          <CampaignForm 
+            campaign={editingCampaign || duplicateData}
+            onSave={handleSaveCampaign}
+            onClose={() => {
+              setIsCreatingCampaign(false);
+              setEditingCampaign(null);
+              setDuplicateData(null);
+            }}
+            contacts={contacts}
+          />
+        )}
       </Router>
     </ThemeProvider>
   );
