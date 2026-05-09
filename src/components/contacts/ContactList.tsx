@@ -280,7 +280,6 @@ export function ContactList({
                   <td className="px-8 py-5"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked={selectedContacts.includes(contact.id || (contact as any)._id)} onChange={() => toggleSelectContact(contact.id || (contact as any)._id)} /></td>
                   <td className="px-6 py-5">
                     <button onClick={() => onEditContact(contact)} className="flex items-center gap-4 hover:text-blue-600 transition-all group/name">
-                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center font-black text-xs group-hover/name:scale-110 transition-all uppercase shadow-sm">{(contact.firstName?.[0] || 'U')}</div>
                       <div>
                         <p className="font-black text-gray-900 dark:text-white uppercase text-xs tracking-tight">{contact.firstName} {contact.lastName}</p>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{contact.id?.slice(-6) || 'NEW'}</p>
@@ -289,7 +288,6 @@ export function ContactList({
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 font-bold text-xs">
-                      <Phone className="w-3 h-3 text-gray-300" />
                       {contact.phone}
                     </div>
                   </td>

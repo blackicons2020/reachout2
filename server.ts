@@ -1,4 +1,5 @@
 import express from 'express';
+import twilio from 'twilio';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -13,6 +14,7 @@ import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import { assignmentEngine } from './services/assignmentEngine.js';
 import { sendATSMS, sendATWhatsApp, makeATCall } from './services/africasTalkingService.js';
+import { makeTwilioCall } from './services/twilioService.js';
 
 dotenv.config();
 
@@ -642,6 +644,42 @@ async function startServer() {
     }
   });
 
+  app.post('/api/contacts/:id/call', authenticateToken, async (req: any, res) => {
+    try {
+      const contact = await Contact.findById(req.params.id);
+      const org = await Organization.findById(req.user.orgId);
+      const member = await Member.findOne({ userId: req.user._id });
+      
+      if (!contact || !org || !member) return res.status(404).json({ message: 'Resource not found' });
+
+      let callSid;
+      // Preference: Twilio for this specific request
+      if (org.settings?.twilio?.accountSid && org.settings?.twilio?.authToken) {
+        callSid = await makeTwilioCall(
+          org.settings.twilio,
+          member.phone,
+          contact.phone,
+          org._id.toString(),
+          contact._id.toString()
+        );
+      } else if (org.settings?.africasTalking?.apiKey) {
+        // Fallback to AT
+        callSid = await makeATCall(
+          org.settings.africasTalking,
+          member.phone,
+          contact.phone,
+          org._id.toString()
+        );
+      } else {
+        return res.status(400).json({ message: 'No voice provider configured' });
+      }
+
+      res.json({ message: 'Call initiated', callSid });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // --- Webhooks ---
   app.post('/api/webhooks/inbound', async (req, res) => {
     // Handle both Twilio and Africa's Talking formats
@@ -693,6 +731,75 @@ async function startServer() {
       console.error('[Webhook] Error:', error);
       res.status(200).send('OK'); // Always return 200 to provider
     }
+  });
+
+  // --- Voice Bridge & AI Callbacks ---
+  app.post('/api/voice/bridge', (req, res) => {
+    const { contactPhone, orgId, contactId } = req.query;
+    const VoiceResponse = twilio.twiml.VoiceResponse;
+    const response = new VoiceResponse();
+
+    response.say({ voice: 'Polly.Amy' }, 'Connecting you to the contact. Please wait.');
+    response.dial({
+      record: 'record-from-answer',
+      recordingStatusCallback: `${process.env.APP_URL || 'http://localhost:5173'}/api/voice/callback?orgId=${orgId}&contactId=${contactId}`
+    }, contactPhone as string);
+
+    res.type('text/xml');
+    res.send(response.toString());
+  });
+
+  app.post('/api/voice/callback', async (req, res) => {
+    const { orgId, contactId } = req.query;
+    const { RecordingUrl, CallSid, DialCallStatus } = req.body;
+
+    console.log(`[Voice] Call ${CallSid} completed. Status: ${DialCallStatus}`);
+
+    if (RecordingUrl) {
+      try {
+        // AI Analysis of the call
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const prompt = `Analyze this call recording URL: ${RecordingUrl}. 
+        Extract the following:
+        1. Call Outcome (Reached, No Answer, Interested, Not Interested, Follow Up Later, Success)
+        2. Brief Summary of the discussion.
+        3. Any specific follow-up actions or dates mentioned.
+        
+        Format the response as JSON: { "outcome": "...", "summary": "...", "nextStep": "..." }`;
+
+        const result = await model.generateContent(prompt);
+        const aiResponse = JSON.parse(result.response.text().replace(/```json|```/g, ''));
+
+        // Save Interaction
+        await new Interaction({
+          contactId,
+          orgId,
+          type: 'call',
+          status: 'completed',
+          content: aiResponse.summary,
+          direction: 'outbound',
+          metadata: { aiResult: aiResponse, recordingUrl: RecordingUrl }
+        }).save();
+
+        // Update Contact
+        await Contact.findByIdAndUpdate(contactId, {
+          followUpStatus: aiResponse.outcome.toLowerCase().replace(/ /g, '_'),
+          $push: {
+            followUpHistory: {
+              callOutcome: aiResponse.outcome,
+              notes: aiResponse.summary,
+              timestamp: Date.now()
+            }
+          }
+        });
+
+        console.log(`[Voice] AI successfully logged call for contact ${contactId}`);
+      } catch (error) {
+        console.error('[Voice] AI Analysis failed:', error);
+      }
+    }
+
+    res.status(200).send('OK');
   });
 
   // --- Data Routes ---

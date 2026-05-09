@@ -98,9 +98,6 @@ export const TeamManagement: React.FC = () => {
               <tr key={member.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-gray-800 dark:to-gray-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
-                      {member.name.charAt(0)}
-                    </div>
                     <div>
                       <div className="font-bold text-gray-900 dark:text-white">{member.name}</div>
                       <div className="text-sm text-gray-400 dark:text-gray-500">{member.email}</div>

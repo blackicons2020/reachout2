@@ -85,15 +85,12 @@ export const MemberDashboard: React.FC = () => {
               >
                 <div className="flex justify-between items-start">
                   <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xl">
-                      {contact.firstName.charAt(0)}
-                    </div>
                     <div>
                       <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
                         {contact.firstName} {contact.lastName}
                       </h3>
-                      <p className="text-sm text-gray-400 font-medium flex items-center gap-1">
-                        <Phone className="w-3 h-3" /> {contact.phone}
+                      <p className="text-sm text-gray-400 font-medium">
+                        {contact.phone}
                       </p>
                       <div className="flex gap-2 mt-2">
                         {contact.tags.slice(0, 2).map(tag => (
@@ -136,27 +133,30 @@ export const MemberDashboard: React.FC = () => {
             <>
               <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 sticky top-8">
                 <div className="text-center mb-6">
-                  <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-4xl mx-auto mb-4 shadow-xl shadow-blue-100 dark:shadow-none">
-                    {selectedContact.firstName.charAt(0)}
-                  </div>
                   <h2 className="text-2xl font-black text-gray-900 dark:text-white">{selectedContact.firstName} {selectedContact.lastName}</h2>
                   <p className="text-gray-400 font-medium">{selectedContact.city}, {selectedContact.state}</p>
                 </div>
 
-                <div className="flex gap-3 mb-8">
-                  <a 
-                    href={`tel:${selectedContact.phone}`}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-4 bg-green-500 text-white font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-green-100 dark:shadow-none"
+                <div className="flex flex-col gap-3 mb-8">
+                  <button 
+                    onClick={async () => {
+                      try {
+                        await api.post(`/contacts/${selectedContact._id}/call`);
+                        alert('Connecting to your phone... Please answer to start the call.');
+                      } catch (err) {
+                        console.error(err);
+                        alert('Failed to initiate call. Check your Twilio settings.');
+                      }
+                    }}
+                    className="w-full py-4 bg-green-500 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-green-100 dark:shadow-none"
                   >
-                    <PhoneCall className="w-5 h-5" />
-                    Call
-                  </a>
+                    Call & Track AI
+                  </button>
                   <button 
                     onClick={() => setIsLogModalOpen(true)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
+                    className="w-full py-4 bg-blue-600 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
                   >
-                    <CheckCircle className="w-5 h-5" />
-                    Log Outcome
+                    Manual Log Outcome
                   </button>
                 </div>
 
