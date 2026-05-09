@@ -9,7 +9,9 @@ import {
   Globe,
   Tag,
   User,
-  Calendar,
+  Shield,
+  GraduationCap,
+  Briefcase,
   Layers
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -28,19 +30,23 @@ const ORG_TYPES = [
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
 
 export function CompleteProfile() {
-  const { user, refreshAuth } = useAuth();
+  const { user, organization, refreshAuth } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isOwner = user?.role === 'owner';
+  const orgType = isOwner ? null : organization?.type;
 
   const [formData, setFormData] = useState({
     // Personal Info
     name: user?.displayName || '',
     gender: '',
-    dob: '',
-    address: '',
+    department: '',
+    lga: '',
+    ward: '',
+    registrationNumber: '',
+    office: '',
     // Org Info
     orgType: '',
     orgName: '',
@@ -78,7 +84,7 @@ export function CompleteProfile() {
             {isOwner ? 'Set Up Your Organization' : 'Complete Your Profile'}
           </h1>
           <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">
-            {isOwner ? 'Configure your workspace to get started' : 'Tell us a bit about yourself to join the team'}
+            {isOwner ? 'Configure your workspace to get started' : `Join ${organization?.name || 'the team'} as a member`}
           </p>
         </div>
 
@@ -90,7 +96,7 @@ export function CompleteProfile() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Personal Section (Always shown) */}
+            {/* Personal Section */}
             <div className="space-y-6">
               <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
                 <User className="w-4 h-4 text-blue-600" />
@@ -119,27 +125,91 @@ export function CompleteProfile() {
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                    <Calendar className="w-3 h-3" /> Date of Birth
-                  </label>
-                  <input
-                    type="date" required
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
-                    value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                  />
-                </div>
+                {/* Specialized Personal Fields based on Org Type */}
+                {orgType === 'religious' && (
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Department / Unit</label>
+                    <input
+                      type="text" required placeholder="e.g. Media Unit, Choir"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                      value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    />
+                  </div>
+                )}
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                    <MapPin className="w-3 h-3" /> Address
-                  </label>
-                  <input
-                    type="text" required placeholder="Residential address"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
-                    value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  />
-                </div>
+                {orgType === 'political' && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">LGA</label>
+                      <input
+                        type="text" required placeholder="Local Government Area"
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                        value={formData.lga} onChange={(e) => setFormData({ ...formData, lga: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ward</label>
+                      <input
+                        type="text" required placeholder="Ward Name/Number"
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                        value={formData.ward} onChange={(e) => setFormData({ ...formData, ward: e.target.value })}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {orgType === 'academic' && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Department</label>
+                      <input
+                        type="text" required placeholder="e.g. Computer Science"
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                        value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Registration Number</label>
+                      <input
+                        type="text" required placeholder="ID / Matric Number"
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                        value={formData.registrationNumber} onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {orgType === 'business' && (
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Department</label>
+                    <input
+                      type="text" required placeholder="e.g. Sales, Marketing"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                      value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    />
+                  </div>
+                )}
+
+                {orgType === 'government' && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Office</label>
+                      <input
+                        type="text" required placeholder="e.g. Director's Office"
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                        value={formData.office} onChange={(e) => setFormData({ ...formData, office: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Department</label>
+                      <input
+                        type="text" required placeholder="e.g. Administration"
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                        value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

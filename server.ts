@@ -80,8 +80,11 @@ const UserSchema = new mongoose.Schema({
   photoURL: String,
   organizationType: String,
   gender: String,
-  address: String,
-  dob: String,
+  department: String,
+  lga: String,
+  ward: String,
+  registrationNumber: String,
+  office: String,
   setupCompleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
@@ -190,8 +193,11 @@ const MemberSchema = new mongoose.Schema({
   email: String,
   phone: String,
   gender: String,
-  dob: String,
-  address: String,
+  department: String,
+  lga: String,
+  ward: String,
+  registrationNumber: String,
+  office: String,
   role: { type: String, enum: ['owner', 'admin', 'manager', 'member', 'volunteer'], default: 'member' },
   department: String,
   assignedRegions: [String],
@@ -583,7 +589,7 @@ async function startServer() {
   app.post('/api/auth/complete-profile', authenticateToken, async (req: any, res) => {
     try {
       const { 
-        name, gender, dob, address, // Common fields
+        name, gender, department, lga, ward, registrationNumber, office, // Common fields
         orgName, orgType, orgIndustry, orgState, orgCity, orgEmail, orgPhone // Org fields
       } = req.body;
       
@@ -595,8 +601,11 @@ async function startServer() {
         await User.findByIdAndUpdate(req.user.userId, {
           displayName: name || user.displayName,
           gender,
-          address,
-          dob,
+          department,
+          lga,
+          ward,
+          registrationNumber,
+          office,
           setupCompleted: true
         });
 
@@ -604,8 +613,11 @@ async function startServer() {
         await Member.findOneAndUpdate({ userId: user._id }, {
           name: name || user.displayName,
           gender,
-          address,
-          dob,
+          department,
+          lga,
+          ward,
+          registrationNumber,
+          office,
           status: 'Active'
         });
 
@@ -629,8 +641,11 @@ async function startServer() {
         orgId: organization._id,
         organizationType: organization.type,
         gender,
-        address,
-        dob,
+        department,
+        lga,
+        ward,
+        registrationNumber,
+        office,
         setupCompleted: true
       });
       
