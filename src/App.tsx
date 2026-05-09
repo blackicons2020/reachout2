@@ -95,7 +95,7 @@ function AppContent() {
     );
   }
 
-  if (profile?.setupCompleted === false) {
+  if (profile && !profile.setupCompleted) {
     return (
       <Routes>
         <Route path="*" element={<CompleteProfile />} />
