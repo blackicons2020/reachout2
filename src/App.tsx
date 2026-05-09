@@ -81,6 +81,7 @@ function AppContent() {
       <Routes>
         <Route path="/login" element={<AuthForm type="login" />} />
         <Route path="/signup" element={<AuthForm type="signup" />} />
+        <Route path="/join" element={<AuthForm type="signup" />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );

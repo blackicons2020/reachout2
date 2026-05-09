@@ -159,6 +159,9 @@ const MemberSchema = new mongoose.Schema({
   totalCompletedFollowUps: { type: Number, default: 0 },
   successfulCalls: { type: Number, default: 0 },
   missedCalls: { type: Number, default: 0 },
+  inviteId: { type: String, unique: true },
+  joinedAt: { type: Date },
+  status: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Pending' },
   createdAt: { type: Number, default: Date.now }
 }, { timestamps: true });
 
@@ -289,16 +292,18 @@ async function startServer() {
         phone,
         role: role || 'member',
         department,
-        assignedRegions: regions
+        assignedRegions: regions,
+        inviteId: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
       });
       await member.save();
 
       const org = await Organization.findById(tenantId);
-      const inviteLink = `${process.env.APP_URL || 'http://localhost:5173'}/join?invite=${member._id}`;
+      const origin = req.get('origin') || process.env.APP_URL || 'http://localhost:5173';
+      const inviteLink = `${origin}/join?invite=${member.inviteId}`;
       const message = `Hello ${name}, you've been invited to join ${org?.name} on ReachOut as a ${role}. Join here: ${inviteLink}`;
       const whatsappUrl = `https://wa.me/${phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
 
-      res.json({ whatsappUrl, inviteLink });
+      res.json({ whatsappUrl, inviteLink, inviteId: member.inviteId });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -405,34 +410,64 @@ async function startServer() {
   app.post('/api/auth/register', async (req, res) => {
     console.log(`[Auth] Register attempt: ${req.body.email}`);
     try {
-      const { email, password, name, orgName, industry } = req.body;
+      const { email, password, name, orgName, industry, joinCode } = req.body;
       
       const existingUser = await User.findOne({ email });
       if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
       const hashedPassword = await bcrypt.hash(password, 10);
       
-      const organization = new Organization({
-        name: orgName || `${name}'s Organization`,
-        industry: industry || 'Other'
-      });
-      await organization.save();
+      let orgId;
+      let role = 'owner';
+      let setupCompleted = false;
+
+      if (joinCode) {
+        // Find the member record associated with this invite
+        const member = await Member.findOne({ inviteId: joinCode });
+        if (!member) return res.status(400).json({ message: 'Invalid or expired invite code' });
+        
+        orgId = member.tenantId;
+        role = member.role.toLowerCase() || 'member';
+        setupCompleted = true; // Members joining an existing org don't need to setup the org
+        
+        // Mark member as joined and update userId
+        member.joinedAt = new Date();
+        member.status = 'Active';
+        // We will set member.userId after user is created
+      } else {
+        const organization = new Organization({
+          name: orgName || `${name}'s Organization`,
+          industry: industry || 'Other'
+        });
+        await organization.save();
+        orgId = organization._id;
+      }
 
       const user = new User({
         email,
         password: hashedPassword,
         displayName: name,
-        orgId: organization._id,
-        role: 'owner',
-        setupCompleted: false
+        orgId: orgId,
+        role: role,
+        setupCompleted: setupCompleted
       });
       await user.save();
 
-      organization.ownerId = user._id.toString();
-      await organization.save();
+      if (joinCode) {
+        await Member.findOneAndUpdate(
+          { inviteId: joinCode }, 
+          { 
+            userId: user._id, 
+            status: 'Active', 
+            joinedAt: new Date() 
+          }
+        );
+      } else {
+        await Organization.findByIdAndUpdate(orgId, { ownerId: user._id.toString() });
+      }
 
-      const token = jwt.sign({ userId: user._id, orgId: organization._id, role: user.role }, process.env.JWT_SECRET || 'secret');
-      res.status(201).json({ token, user: { id: user._id, email, displayName: name, orgId: organization._id, role: user.role } });
+      const token = jwt.sign({ userId: user._id, orgId: orgId, role: user.role }, process.env.JWT_SECRET || 'secret');
+      res.status(201).json({ token, user: { id: user._id, email, displayName: name, orgId: orgId, role: user.role, setupCompleted } });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
