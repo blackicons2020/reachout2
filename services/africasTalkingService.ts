@@ -44,7 +44,6 @@ export const sendATWhatsApp = async ({ username, apiKey, to, message, from }: an
   }
 };
 
-/*
 export const makeATCall = async ({ username, apiKey, from, to }: any) => {
   try {
     const at = createATClient(username, apiKey);
@@ -60,4 +59,3 @@ export const makeATCall = async ({ username, apiKey, from, to }: any) => {
     return false;
   }
 };
-*/
