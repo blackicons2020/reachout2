@@ -9,6 +9,7 @@ export const MemberDashboard: React.FC = () => {
   const [assignedContacts, setAssignedContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
 
@@ -151,11 +152,11 @@ export const MemberDashboard: React.FC = () => {
                     Call
                   </a>
                   <button 
-                    onClick={() => setSelectedContact(selectedContact)} // Already selected, but can trigger log modal
+                    onClick={() => setIsLogModalOpen(true)}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
                   >
                     <CheckCircle className="w-5 h-5" />
-                    Log
+                    Log Outcome
                   </button>
                 </div>
 
@@ -200,10 +201,10 @@ export const MemberDashboard: React.FC = () => {
         </div>
       </div>
 
-      {selectedContact && (
+      {isLogModalOpen && selectedContact && (
         <CallLogModal 
           contact={selectedContact}
-          onClose={() => setSelectedContact(null)}
+          onClose={() => setIsLogModalOpen(false)}
           onSuccess={fetchAssignedContacts}
         />
       )}
