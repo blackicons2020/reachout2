@@ -94,7 +94,7 @@ const ContactSchema = new mongoose.Schema({
   groups: [String],
   customFields: mongoose.Schema.Types.Mixed,
   notes: String,
-  status: { type: String, enum: ['active', 'unsubscribed', 'blocked'], default: 'active' },
+  status: { type: String, enum: ['active', 'unsubscribed', 'blocked', 'inactive', 'lead', 'customer', 'engaged', 'cold', 'converted'], default: 'active' },
   optedOutAt: Number,
   organizationType: String,
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
@@ -108,7 +108,31 @@ const ContactSchema = new mongoose.Schema({
     nextFollowUpDate: Number
   }],
   lastContactedAt: Number,
-  createdAt: { type: Number, default: Date.now }
+  createdAt: { type: Number, default: Date.now },
+  
+  // Specialized Fields
+  location: String,
+  lga: String,
+  ward: String,
+  outreachDate: String,
+  source: String,
+  prayerRequests: String,
+  attendanceStatus: String,
+  pollingUnit: String,
+  votingInterest: String,
+  participationHistory: String,
+  occupation: String,
+  community: String,
+  feedbackHistory: String,
+  customerType: String,
+  lastInteraction: String,
+  engagementScore: Number,
+  purchaseHistory: String,
+  department: String,
+  level: String,
+  faculty: String,
+  guardianContact: String,
+  performanceCategory: String
 }, { timestamps: true });
 
 const CampaignSchema = new mongoose.Schema({
