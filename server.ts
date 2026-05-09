@@ -92,8 +92,8 @@ const ContactSchema = new mongoose.Schema({
   groups: [String],
   customFields: mongoose.Schema.Types.Mixed,
   notes: String,
-  status: { type: String, default: 'active' },
-  engagementScore: { type: Number, default: 0 },
+  status: { type: String, enum: ['active', 'unsubscribed', 'blocked'], default: 'active' },
+  optedOutAt: Number,
   organizationType: String,
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
   followUpStatus: { type: String, default: 'not_called' },
@@ -309,7 +309,7 @@ async function startServer() {
       const org = await Organization.findById(tenantId);
       const origin = req.get('origin') || process.env.APP_URL || 'http://localhost:5173';
       const inviteLink = `${origin}/join?invite=${member.inviteId}`;
-      const message = `Hello ${name}, you've been invited to join ${org?.name} on ReachOut as a ${role}. Join here: ${inviteLink}`;
+      const message = `Hello ${name}, you've been invited to join ${org?.name} on ReachOut as a ${role}. Join here: ${inviteLink}\n\nReply STOP to unsubscribe.`;
       const whatsappUrl = `https://wa.me/${phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
 
       // Try automated sending if Twilio is configured
@@ -642,6 +642,59 @@ async function startServer() {
     }
   });
 
+  // --- Webhooks ---
+  app.post('/api/webhooks/inbound', async (req, res) => {
+    // Handle both Twilio and Africa's Talking formats
+    const from = req.body.From || req.body.from;
+    const body = req.body.Body || req.body.text;
+    const to = req.body.To || req.body.to;
+    
+    if (!from || !body) return res.status(200).send('OK');
+
+    console.log(`[Webhook] Inbound from ${from}: ${body}`);
+
+    try {
+      const cleanPhone = from.replace(/\D/g, '').slice(-10); // Match last 10 digits to find contact
+      const contacts = await Contact.find({ phone: { $regex: cleanPhone } });
+
+      if (contacts.length > 0) {
+        const keywords = ['stop', 'unsubscribe', 'remove', 'opt out', 'cancel'];
+        const isOptOut = keywords.some(k => body.toLowerCase().includes(k));
+
+        for (const contact of contacts) {
+          if (isOptOut) {
+            contact.status = 'unsubscribed';
+            contact.optedOutAt = Date.now();
+            await contact.save();
+            console.log(`[Webhook] Contact ${contact.phone} opted out`);
+          }
+
+          // Record interaction
+          await new Interaction({
+            contactId: contact._id,
+            orgId: contact.orgId,
+            type: body.startsWith('whatsapp:') ? 'whatsapp' : 'sms',
+            status: 'received',
+            content: body,
+            direction: 'inbound'
+          }).save();
+
+          // Create Activity
+          await new Activity({
+            tenantId: contact.orgId,
+            actionType: isOptOut ? 'opt_out' : 'message_received',
+            metadata: { contactId: contact._id, text: body }
+          }).save();
+        }
+      }
+
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error('[Webhook] Error:', error);
+      res.status(200).send('OK'); // Always return 200 to provider
+    }
+  });
+
   // --- Data Routes ---
   const dataHandler = async (req: any, res: any) => {
     try {
@@ -925,7 +978,10 @@ async function startServer() {
       const org = await Organization.findById(campaign.orgId);
       if (!org) return;
 
-      const contacts = await Contact.find({ orgId: org._id });
+      const contacts = await Contact.find({ 
+        orgId: org._id,
+        status: 'active' // Only target active contacts
+      });
       const isAllContacts = campaign.targetGroups?.includes('All Contacts');
       let targetContacts = contacts;
       
