@@ -1026,8 +1026,10 @@ async function startServer() {
   app.get('/api/admin/organizations', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
       const orgs = await Organization.find().sort({ createdAt: -1 });
+      console.log(`[Admin] Fetched ${orgs.length} organizations`);
       res.json(orgs);
     } catch (error: any) {
+      console.error('[Admin] Org fetch error:', error);
       res.status(500).json({ message: error.message });
     }
   });
@@ -1045,8 +1047,10 @@ async function startServer() {
   app.get('/api/admin/users', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
       const users = await User.find().sort({ createdAt: -1 });
+      console.log(`[Admin] Fetched ${users.length} users`);
       res.json(users);
     } catch (error: any) {
+      console.error('[Admin] User fetch error:', error);
       res.status(500).json({ message: error.message });
     }
   });
