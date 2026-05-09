@@ -39,14 +39,19 @@ export const TeamManagement: React.FC = () => {
         regions: inviteForm.regions.split(',').map(r => r.trim())
       });
       
-      // Open WhatsApp if URL provided
-      if (result.whatsappUrl) {
+      // Only open WhatsApp manually if automated send failed or wasn't configured
+      if (!result.automatedSend && result.whatsappUrl) {
         window.open(result.whatsappUrl, '_blank');
       }
       
       setShowInvite(false);
       fetchMembers();
-      alert('Invitation sent via WhatsApp!');
+      
+      if (result.automatedSend) {
+        alert('Invitation sent automatically via WhatsApp API!');
+      } else {
+        alert('Invitation link generated! Opening WhatsApp for manual send...');
+      }
     } catch (error) {
       console.error('Failed to invite member:', error);
       alert('Failed to send invitation.');

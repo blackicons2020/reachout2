@@ -303,7 +303,31 @@ async function startServer() {
       const message = `Hello ${name}, you've been invited to join ${org?.name} on ReachOut as a ${role}. Join here: ${inviteLink}`;
       const whatsappUrl = `https://wa.me/${phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
 
-      res.json({ whatsappUrl, inviteLink, inviteId: member.inviteId });
+      // Try automated sending if Twilio is configured
+      let automatedSend = false;
+      if (org?.settings?.twilio?.accountSid && org?.settings?.twilio?.whatsappFromNumber) {
+        try {
+          automatedSend = await sendTwilioMessage({
+            type: 'whatsapp',
+            to: phone,
+            message,
+            accountSid: org.settings.twilio.accountSid,
+            authToken: org.settings.twilio.authToken,
+            from: org.settings.twilio.whatsappFromNumber,
+            defaultCode: org.settings.profile?.countryCode?.replace('+', '') || '234'
+          });
+        } catch (e) {
+          console.error('[Invite] Automated send failed:', e);
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        automatedSend,
+        whatsappUrl, 
+        inviteLink, 
+        inviteId: member.inviteId 
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
