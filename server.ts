@@ -589,57 +589,16 @@ async function startServer() {
   app.post('/api/auth/complete-profile', authenticateToken, async (req: any, res) => {
     try {
       const { 
-        name, gender, department, lga, ward, registrationNumber, office, // Common fields
+        name, gender, department, lga, ward, registrationNumber, office, // Personal fields
         orgName, orgType, orgIndustry, orgState, orgCity, orgEmail, orgPhone // Org fields
       } = req.body;
       
       const user = await User.findById(req.user.userId);
       if (!user) return res.status(404).json({ message: 'User not found' });
 
-      // Case 1: Member joining existing org
-      if (user.role !== 'owner' && user.orgId) {
-        await User.findByIdAndUpdate(req.user.userId, {
-          displayName: name || user.displayName,
-          gender,
-          department,
-          lga,
-          ward,
-          registrationNumber,
-          office,
-          setupCompleted: true
-        });
-
-        // Sync with Member record
-        await Member.findOneAndUpdate({ userId: user._id }, {
-          name: name || user.displayName,
-          gender,
-          department,
-          lga,
-          ward,
-          registrationNumber,
-          office,
-          status: 'Active'
-        });
-
-        return res.json({ message: 'Profile completed' });
-      }
-
-      // Case 2: Owner setting up new org
-      const organization = new Organization({
-        name: orgName || name,
-        type: orgType || 'business',
-        industry: orgIndustry || orgType || 'Other',
-        country: orgState,
-        settings: {
-          email: { fromEmail: orgEmail || user.email, fromName: orgName || name }
-        }
-      });
-      await organization.save();
-      
-      await User.findByIdAndUpdate(req.user.userId, {
+      // Update User profile (common for everyone)
+      const userUpdates: any = {
         displayName: name || user.displayName,
-        orgId: organization._id,
-        organizationType: organization.type,
         gender,
         department,
         lga,
@@ -647,10 +606,49 @@ async function startServer() {
         registrationNumber,
         office,
         setupCompleted: true
-      });
+      };
+
+      // Handle Organization updates
+      if (user.orgId) {
+        // Update existing org (whether owner or member, though mostly for owner)
+        await Organization.findByIdAndUpdate(user.orgId, {
+          name: orgName || undefined,
+          type: orgType || undefined,
+          industry: orgIndustry || orgType || undefined,
+          country: orgState || undefined,
+          'settings.email.fromEmail': orgEmail || undefined,
+          'settings.email.fromName': orgName || undefined
+        });
+
+        // Sync/Create Member record
+        // This ensures the user (even the owner) appears in the team list and can log calls
+        const memberData = {
+          name: name || user.displayName,
+          email: user.email,
+          gender,
+          department,
+          lga,
+          ward,
+          registrationNumber,
+          office,
+          status: 'Active',
+          tenantId: user.orgId,
+          userId: user._id,
+          role: user.role
+        };
+
+        await Member.findOneAndUpdate(
+          { userId: user._id },
+          { $set: memberData },
+          { upsert: true, new: true }
+        );
+      }
+
+      await User.findByIdAndUpdate(req.user.userId, userUpdates);
       
-      res.status(201).json({ message: 'Organization and profile completed', organization });
+      res.json({ message: 'Profile completed successfully' });
     } catch (error: any) {
+      console.error('[CompleteProfile] Error:', error);
       res.status(500).json({ message: error.message });
     }
   });

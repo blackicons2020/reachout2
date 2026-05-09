@@ -36,7 +36,8 @@ export function CompleteProfile() {
   const [error, setError] = useState<string | null>(null);
 
   const isOwner = user?.role === 'owner';
-  const orgType = isOwner ? null : organization?.type;
+  const orgType = isOwner ? formData.orgType : organization?.type;
+  const isDataLoading = !isOwner && user?.orgId && !organization;
 
   const [formData, setFormData] = useState({
     // Personal Info
@@ -74,6 +75,17 @@ export function CompleteProfile() {
       setIsLoading(false);
     }
   };
+
+  if (isDataLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto" />
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading Organization Profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0b0e14] flex items-center justify-center p-4 py-8">
