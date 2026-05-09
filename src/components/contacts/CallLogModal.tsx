@@ -47,19 +47,19 @@ export const CallLogModal: React.FC<CallLogModalProps> = ({ contact, onClose, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100">
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden border border-gray-100 dark:border-gray-800">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900">
           <div>
-            <h3 className="text-xl font-bold text-gray-900">Log Call Outcome</h3>
-            <p className="text-sm text-gray-500">Contact: {contact.firstName} {contact.lastName}</p>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Log Call Outcome</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Contact: {contact.firstName} {contact.lastName}</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-white/50 dark:hover:bg-gray-800 rounded-full transition-colors">
             <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+          <div className="grid grid-cols-2 gap-2">
             {outcomes.map((item) => {
               const Icon = item.icon;
               return (
@@ -67,14 +67,14 @@ export const CallLogModal: React.FC<CallLogModalProps> = ({ contact, onClose, on
                   key={item.id}
                   type="button"
                   onClick={() => setOutcome(item.id)}
-                  className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border-2 transition-all text-left ${
                     outcome === item.id
-                      ? 'border-blue-500 bg-blue-50 ring-4 ring-blue-50'
-                      : 'border-gray-100 hover:border-gray-200 bg-gray-50'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-4 ring-blue-50 dark:ring-blue-900/10'
+                      : 'border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-gray-50 dark:bg-gray-950'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${item.color}`} />
-                  <span className={`text-sm font-medium ${outcome === item.id ? 'text-blue-700' : 'text-gray-600'}`}>
+                  <Icon className={`w-4 h-4 ${item.color}`} />
+                  <span className={`text-xs font-bold ${outcome === item.id ? 'text-blue-700 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>
                     {item.label}
                   </span>
                 </button>
@@ -82,40 +82,40 @@ export const CallLogModal: React.FC<CallLogModalProps> = ({ contact, onClose, on
             })}
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Engagement Notes</label>
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Engagement Notes</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all resize-none h-32"
+              className="w-full p-4 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 dark:text-white rounded-xl focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 focus:border-blue-500 outline-none transition-all resize-none h-24 text-sm"
               placeholder="What did you discuss? Any specific feedback or requests?"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Next Follow-up (Optional)</label>
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Next Follow-up (Optional)</label>
             <input
               type="datetime-local"
               value={nextFollowUp}
               onChange={(e) => setNextFollowUp(e.target.value)}
-              className="w-full p-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all"
+              className="w-full p-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 dark:text-white rounded-xl focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 focus:border-blue-500 outline-none transition-all text-sm"
             />
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-2 sticky bottom-0 bg-white dark:bg-gray-900">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all"
+              className="flex-1 px-6 py-3 border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 font-bold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 dark:shadow-none hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-sm"
             >
-              {loading ? 'Saving...' : 'Save Call Log'}
+              {loading ? 'Saving...' : 'Save Log'}
             </button>
           </div>
         </form>
