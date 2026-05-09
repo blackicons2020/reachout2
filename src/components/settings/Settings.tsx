@@ -400,7 +400,170 @@ export function Settings() {
             </div>
           )}
           
-          {/* Notifications and Security tabs omitted for brevity in this view_file context, assuming they were correctly implemented previously */}
+          {activeTab === 'notifications' && (
+            <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-8">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Notification Preferences</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Control how and when you receive updates from ReachOut.</p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h4 className="text-xs font-black text-blue-600 uppercase tracking-widest">Email Notifications</h4>
+                  <div className="space-y-3">
+                    {[
+                      { key: 'campaignSuccess', label: 'Campaign Performance Reports', desc: 'Get a summary after each outreach campaign completes.' },
+                      { key: 'billingAlerts', label: 'Billing & Subscription', desc: 'Invoices, payment failures, and usage alerts.' },
+                      { key: 'securityAlerts', label: 'Security Alerts', desc: 'Notifications about new logins or password changes.' }
+                    ].map((item) => (
+                      <div key={item.key} className="flex items-start justify-between p-4 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800">
+                        <div>
+                          <p className="font-bold text-gray-900 dark:text-white text-sm">{item.label}</p>
+                          <p className="text-xs text-gray-500">{item.desc}</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={orgSettings.notifications?.email?.[item.key]} 
+                            onChange={(e) => setOrgSettings({
+                              ...orgSettings,
+                              notifications: {
+                                ...orgSettings.notifications,
+                                email: { ...orgSettings.notifications.email, [item.key]: e.target.checked }
+                              }
+                            })}
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <h4 className="text-xs font-black text-blue-600 uppercase tracking-widest">Other Channels</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between p-4 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800">
+                      <div>
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">WhatsApp Notifications</p>
+                        <p className="text-xs text-gray-500">Receive critical system alerts directly on your WhatsApp.</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer" 
+                          checked={orgSettings.notifications?.whatsappNotifications} 
+                          onChange={(e) => setOrgSettings({
+                            ...orgSettings,
+                            notifications: { ...orgSettings.notifications, whatsappNotifications: e.target.checked }
+                          })}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'security' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-8">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Security Settings</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Enhance the protection of your organization's data.</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-5 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-2xl">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-white dark:bg-gray-900 rounded-xl shadow-sm text-blue-600">
+                        <Shield className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">Two-Factor Authentication (2FA)</p>
+                        <p className="text-xs text-gray-500">Add an extra layer of security to your account.</p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={orgSettings.security?.twoFactorEnabled} 
+                        onChange={(e) => setOrgSettings({
+                          ...orgSettings,
+                          security: { ...orgSettings.security, twoFactorEnabled: e.target.checked }
+                        })}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-5 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">Login Alerts</p>
+                        <p className="text-xs text-gray-500">Notify me of new login attempts.</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer" 
+                          checked={orgSettings.security?.loginAlerts} 
+                          onChange={(e) => setOrgSettings({
+                            ...orgSettings,
+                            security: { ...orgSettings.security, loginAlerts: e.target.checked }
+                          })}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+
+                    <div className="p-5 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">Data Sharing</p>
+                        <p className="text-xs text-gray-500">Allow AI models to learn from your data.</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer" 
+                          checked={orgSettings.security?.dataSharing} 
+                          onChange={(e) => setOrgSettings({
+                            ...orgSettings,
+                            security: { ...orgSettings.security, dataSharing: e.target.checked }
+                          })}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-red-50/30 dark:bg-red-900/10 p-8 rounded-3xl border border-red-100 dark:border-red-900/30 space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-red-600 flex items-center gap-2">
+                    <Trash2 className="w-5 h-5" />
+                    Danger Zone
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">Irreversible actions regarding your organization data.</p>
+                </div>
+                
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-6 bg-white dark:bg-gray-900 rounded-2xl border border-red-100 dark:border-red-900/30">
+                  <div>
+                    <p className="font-bold text-gray-900 dark:text-white">Delete Organization</p>
+                    <p className="text-xs text-gray-500">Once deleted, all data, contacts and campaigns will be permanently removed.</p>
+                  </div>
+                  <button className="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 dark:shadow-none whitespace-nowrap">
+                    Delete Permanently
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
