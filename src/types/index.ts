@@ -1,4 +1,4 @@
-export type UserRole = 'owner' | 'admin' | 'editor' | 'viewer' | 'superadmin';
+export type UserRole = 'owner' | 'admin' | 'manager' | 'member' | 'volunteer' | 'superadmin';
 
 export interface Organization {
   id: string;
@@ -87,6 +87,16 @@ export interface Contact {
   faculty?: string;
   guardianContact?: string;
   performanceCategory?: string;
+  assignedTo?: string;
+  followUpStatus?: string;
+  followUpHistory?: {
+    memberId: string;
+    memberName: string;
+    timestamp: number;
+    callOutcome: string;
+    notes: string;
+    nextFollowUpDate?: number;
+  }[];
 }
 
 export interface Campaign {
@@ -133,4 +143,53 @@ export interface Interaction {
   content?: string;
   recordingUrl?: string;
   transcript?: string;
+}
+
+export interface Member {
+  id: string;
+  tenantId: string;
+  userId?: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: UserRole;
+  department?: string;
+  assignedRegions: string[];
+  performanceScore: number;
+  totalAssignedContacts: number;
+  totalCompletedFollowUps: number;
+  successfulCalls: number;
+  missedCalls: number;
+  createdAt: number;
+}
+
+export interface Assignment {
+  id: string;
+  tenantId: string;
+  contactId: string;
+  assignedTo: string;
+  assignedBy: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'completed' | 'reassigned';
+  createdAt: number;
+}
+
+export interface CallLog {
+  id: string;
+  tenantId: string;
+  contactId: string;
+  memberId: string;
+  outcome: 'not_called' | 'called_no_answer' | 'reached' | 'interested' | 'follow_up_later' | 'unreachable' | 'converted';
+  notes: string;
+  timestamp: number;
+  nextFollowUpDate?: number;
+}
+
+export interface Activity {
+  id: string;
+  tenantId: string;
+  actorId: string;
+  actionType: string;
+  metadata: Record<string, any>;
+  timestamp: number;
 }

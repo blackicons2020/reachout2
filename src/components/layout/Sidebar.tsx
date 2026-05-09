@@ -15,7 +15,8 @@ import {
   X,
   Bell,
   Sun,
-  Moon
+  Moon,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme';
@@ -40,10 +41,17 @@ const navGroups = [
     ]
   },
   {
+    title: 'Outreach Team',
+    items: [
+      { name: 'My Tasks', path: '/my-tasks', icon: Clock },
+      { name: 'Members', path: '/members', icon: Users },
+      { name: 'Performance', path: '/reports', icon: BarChart3 },
+    ]
+  },
+  {
     title: 'Organization',
     items: [
       { name: 'Admin Control', path: '/admin', icon: ShieldCheck },
-      { name: 'Members', path: '/members', icon: Users },
       { name: 'Billing', path: '/billing', icon: CreditCard },
       { name: 'Settings', path: '/settings', icon: Settings },
     ]

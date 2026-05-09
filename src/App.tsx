@@ -27,6 +27,8 @@ import { PoliticalDashboard } from './components/dashboards/PoliticalDashboard';
 import { GovernmentDashboard } from './components/dashboards/GovernmentDashboard';
 import { BusinessDashboard } from './components/dashboards/BusinessDashboard';
 import { EducationDashboard } from './components/dashboards/EducationDashboard';
+import { TeamManagement } from './components/organization/TeamManagement';
+import { MemberDashboard } from './components/dashboards/MemberDashboard';
 import api from './lib/api';
 
 function AppContent() {
@@ -248,7 +250,8 @@ function AppContent() {
         } />
         <Route path="/reports" element={<Reports campaigns={campaigns} />} />
         <Route path="/call-logs" element={<CallLogs />} />
-        <Route path="/members" element={<Members members={members} />} />
+        <Route path="/members" element={<TeamManagement />} />
+        <Route path="/my-tasks" element={<MemberDashboard />} />
         <Route path="/inbox" element={<Inbox messages={[]} />} />
         <Route path="/notifications" element={<Notifications notifications={[]} />} />
         <Route path="/billing" element={<Billing />} />

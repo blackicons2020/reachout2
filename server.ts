@@ -11,6 +11,7 @@ import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
+import { assignmentEngine } from './services/assignmentEngine.js';
 
 dotenv.config();
 
@@ -85,6 +86,16 @@ const ContactSchema = new mongoose.Schema({
   status: { type: String, default: 'active' },
   engagementScore: { type: Number, default: 0 },
   organizationType: String,
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
+  followUpStatus: { type: String, default: 'not_called' },
+  followUpHistory: [{
+    memberId: String,
+    memberName: String,
+    timestamp: Number,
+    callOutcome: String,
+    notes: String,
+    nextFollowUpDate: Number
+  }],
   lastContactedAt: Number,
   createdAt: { type: Number, default: Date.now }
 }, { timestamps: true });
@@ -133,6 +144,56 @@ const User = mongoose.model('User', UserSchema);
 const Contact = mongoose.model('Contact', ContactSchema);
 const Campaign = mongoose.model('Campaign', CampaignSchema);
 const Interaction = mongoose.model('Interaction', InteractionSchema);
+
+const MemberSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  name: String,
+  email: String,
+  phone: String,
+  role: { type: String, enum: ['owner', 'admin', 'manager', 'member', 'volunteer'], default: 'member' },
+  department: String,
+  assignedRegions: [String],
+  performanceScore: { type: Number, default: 0 },
+  totalAssignedContacts: { type: Number, default: 0 },
+  totalCompletedFollowUps: { type: Number, default: 0 },
+  successfulCalls: { type: Number, default: 0 },
+  missedCalls: { type: Number, default: 0 },
+  createdAt: { type: Number, default: Date.now }
+}, { timestamps: true });
+
+const AssignmentSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true },
+  contactId: { type: mongoose.Schema.Types.ObjectId, ref: 'Contact', required: true },
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
+  assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
+  status: { type: String, enum: ['pending', 'completed', 'reassigned'], default: 'pending' },
+  createdAt: { type: Number, default: Date.now }
+}, { timestamps: true });
+
+const CallLogSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true },
+  contactId: { type: mongoose.Schema.Types.ObjectId, ref: 'Contact', required: true },
+  memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
+  outcome: { type: String, enum: ['not_called', 'called_no_answer', 'reached', 'interested', 'follow_up_later', 'unreachable', 'converted'] },
+  notes: String,
+  timestamp: { type: Number, default: Date.now },
+  nextFollowUpDate: Number
+}, { timestamps: true });
+
+const ActivitySchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true },
+  actorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  actionType: String,
+  metadata: mongoose.Schema.Types.Mixed,
+  timestamp: { type: Number, default: Date.now }
+}, { timestamps: true });
+
+const Member = mongoose.model('Member', MemberSchema);
+const Assignment = mongoose.model('Assignment', AssignmentSchema);
+const CallLog = mongoose.model('CallLog', CallLogSchema);
+const Activity = mongoose.model('Activity', ActivitySchema);
 
 const LogSchema = new mongoose.Schema({
   message: String,
@@ -203,6 +264,141 @@ async function startServer() {
   app.use(express.static(path.join(__dirname, 'dist')));
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+  const engine = assignmentEngine({ Contact, Member, Assignment, Organization }, ai);
+
+  // --- Team Management Routes ---
+
+  app.get('/api/team/members', authenticateToken, async (req: any, res) => {
+    try {
+      const members = await Member.find({ tenantId: req.user.orgId });
+      res.json(members);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/team/invite', authenticateToken, async (req: any, res) => {
+    try {
+      const { email, phone, name, role, department, regions } = req.body;
+      const tenantId = req.user.orgId;
+
+      const member = new Member({
+        tenantId,
+        name,
+        email,
+        phone,
+        role: role || 'member',
+        department,
+        assignedRegions: regions
+      });
+      await member.save();
+
+      const org = await Organization.findById(tenantId);
+      const inviteLink = `${process.env.APP_URL || 'http://localhost:5173'}/join?invite=${member._id}`;
+      const message = `Hello ${name}, you've been invited to join ${org?.name} on ReachOut as a ${role}. Join here: ${inviteLink}`;
+      const whatsappUrl = `https://wa.me/${phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+
+      res.json({ whatsappUrl, inviteLink });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/team/assign', authenticateToken, async (req: any, res) => {
+    try {
+      const result = await engine.assignContactsToMembers(req.user.orgId);
+      res.json({ message: 'Contacts assigned successfully', result });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/team/call-log', authenticateToken, async (req: any, res) => {
+    try {
+      const { contactId, outcome, notes, nextFollowUpDate } = req.body;
+      const tenantId = req.user.orgId;
+      
+      // Try to find member by userId, or use the one linked to the request
+      let member = await Member.findOne({ userId: req.user.userId, tenantId });
+      
+      // If not found, maybe the user is the owner but acting as a member
+      if (!member) {
+        member = await Member.findOne({ email: req.user.email, tenantId });
+      }
+
+      if (!member) return res.status(403).json({ message: 'Member profile not found' });
+
+      const callLog = new CallLog({
+        tenantId,
+        contactId,
+        memberId: member._id,
+        outcome,
+        notes,
+        nextFollowUpDate
+      });
+      await callLog.save();
+
+      await Contact.findByIdAndUpdate(contactId, {
+        followUpStatus: outcome,
+        $push: {
+          followUpHistory: {
+            memberId: member._id.toString(),
+            memberName: member.name,
+            timestamp: Date.now(),
+            callOutcome: outcome,
+            notes,
+            nextFollowUpDate
+          }
+        }
+      });
+
+      const update: any = { $inc: { totalCompletedFollowUps: 1 } };
+      if (['reached', 'interested', 'converted'].includes(outcome)) {
+        update.$inc = { ...update.$inc, successfulCalls: 1 };
+      } else if (outcome === 'called_no_answer') {
+        update.$inc = { ...update.$inc, missedCalls: 1 };
+      }
+      await Member.findByIdAndUpdate(member._id, update);
+
+      await new Activity({
+        tenantId,
+        actorId: req.user.userId,
+        actionType: 'call_logged',
+        metadata: { contactId, outcome }
+      }).save();
+
+      res.status(201).json(callLog);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/team/activities', authenticateToken, async (req: any, res) => {
+    try {
+      const activities = await Activity.find({ tenantId: req.user.orgId }).sort({ timestamp: -1 }).limit(50);
+      res.json(activities);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/team/ai-alerts', authenticateToken, async (req: any, res) => {
+    try {
+      const alerts = await engine.getAIAlerts(req.user.orgId);
+      res.json(alerts);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/team/performance', authenticateToken, async (req: any, res) => {
+    try {
+      const members = await Member.find({ tenantId: req.user.orgId }).sort({ performanceScore: -1 });
+      res.json(members);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   // --- Auth Routes ---
 
