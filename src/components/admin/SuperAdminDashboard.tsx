@@ -22,6 +22,7 @@ export function SuperAdminDashboard() {
   const [logs, setLogs] = useState<any[]>([]);
   const [systemConfig, setSystemConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'organizations' | 'users' | 'system'>('organizations');
   const [searchQuery, setSearchQuery] = useState('');
 
