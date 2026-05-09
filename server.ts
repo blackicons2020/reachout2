@@ -79,6 +79,9 @@ const UserSchema = new mongoose.Schema({
   displayName: String,
   photoURL: String,
   organizationType: String,
+  gender: String,
+  address: String,
+  dob: String,
   setupCompleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
@@ -186,6 +189,9 @@ const MemberSchema = new mongoose.Schema({
   name: String,
   email: String,
   phone: String,
+  gender: String,
+  dob: String,
+  address: String,
   role: { type: String, enum: ['owner', 'admin', 'manager', 'member', 'volunteer'], default: 'member' },
   department: String,
   assignedRegions: [String],
@@ -502,7 +508,7 @@ async function startServer() {
         
         orgId = member.tenantId;
         role = member.role.toLowerCase() || 'member';
-        setupCompleted = true; // Members joining an existing org don't need to setup the org
+        setupCompleted = false; // Members joining an existing org now go through profile setup
         
         // Mark member as joined and update userId
         member.joinedAt = new Date();
@@ -574,29 +580,61 @@ async function startServer() {
     }
   });
 
-  app.post('/api/organizations', authenticateToken, async (req: any, res) => {
-    console.log(`[Org] Setup attempt for user: ${req.user.userId}`);
+  app.post('/api/auth/complete-profile', authenticateToken, async (req: any, res) => {
     try {
-      const { name, type, industry, state, city, email, phone } = req.body;
+      const { 
+        name, gender, dob, address, // Common fields
+        orgName, orgType, orgIndustry, orgState, orgCity, orgEmail, orgPhone // Org fields
+      } = req.body;
       
+      const user = await User.findById(req.user.userId);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      // Case 1: Member joining existing org
+      if (user.role !== 'owner' && user.orgId) {
+        await User.findByIdAndUpdate(req.user.userId, {
+          displayName: name || user.displayName,
+          gender,
+          address,
+          dob,
+          setupCompleted: true
+        });
+
+        // Sync with Member record
+        await Member.findOneAndUpdate({ userId: user._id }, {
+          name: name || user.displayName,
+          gender,
+          address,
+          dob,
+          status: 'Active'
+        });
+
+        return res.json({ message: 'Profile completed' });
+      }
+
+      // Case 2: Owner setting up new org
       const organization = new Organization({
-        name,
-        type: type || 'business',
-        industry: industry || type || 'Other',
-        country: state, // Using state as country for now or adjust model
+        name: orgName || name,
+        type: orgType || 'business',
+        industry: orgIndustry || orgType || 'Other',
+        country: orgState,
         settings: {
-          email: { fromEmail: email, fromName: name }
+          email: { fromEmail: orgEmail || user.email, fromName: orgName || name }
         }
       });
       await organization.save();
       
       await User.findByIdAndUpdate(req.user.userId, {
+        displayName: name || user.displayName,
         orgId: organization._id,
         organizationType: organization.type,
+        gender,
+        address,
+        dob,
         setupCompleted: true
       });
       
-      res.status(201).json(organization);
+      res.status(201).json({ message: 'Organization and profile completed', organization });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

@@ -7,7 +7,10 @@ import {
   ArrowRight, 
   Loader2, 
   Globe,
-  Tag
+  Tag,
+  User,
+  Calendar,
+  Layers
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
@@ -22,19 +25,29 @@ const ORG_TYPES = [
   { label: 'Academic Institution', value: 'academic' }
 ];
 
+const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
+
 export function CompleteProfile() {
   const { user, refreshAuth } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isOwner = user?.role === 'owner';
+
   const [formData, setFormData] = useState({
-    type: '',
-    name: '',
-    state: '',
-    city: '',
-    email: user?.email || '',
-    phone: ''
+    // Personal Info
+    name: user?.displayName || '',
+    gender: '',
+    dob: '',
+    address: '',
+    // Org Info
+    orgType: '',
+    orgName: '',
+    orgState: '',
+    orgCity: '',
+    orgEmail: user?.email || '',
+    orgPhone: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,19 +58,7 @@ export function CompleteProfile() {
     setError(null);
 
     try {
-      await api.post('/organizations', {
-        name: formData.name,
-        type: formData.type,
-        state: formData.state,
-        city: formData.city,
-        email: formData.email,
-        phone: formData.phone,
-        settings: {
-          twilio: {},
-          voice: { provider: 'elevenlabs' }
-        }
-      });
-
+      await api.post('/auth/complete-profile', formData);
       await refreshAuth?.();
       navigate('/');
     } catch (err: any) {
@@ -73,123 +74,130 @@ export function CompleteProfile() {
       <div className="w-full max-w-xl space-y-6">
         <div className="text-center">
           <Logo className="w-10 h-10 mx-auto mb-4" size={40} />
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Complete Your Profile</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Set up your organization to get started</p>
+          <h1 className="text-2xl font-black text-white tracking-tight uppercase">
+            {isOwner ? 'Set Up Your Organization' : 'Complete Your Profile'}
+          </h1>
+          <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">
+            {isOwner ? 'Configure your workspace to get started' : 'Tell us a bit about yourself to join the team'}
+          </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-100 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm font-bold animate-in fade-in slide-in-from-top-2">
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-2xl text-red-600 dark:text-red-400 text-xs font-bold animate-in fade-in slide-in-from-top-2">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Org Type */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-700 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  Type of Organization
-                </label>
-                <select
-                  required
-                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                >
-                  <option value="" className="bg-white dark:bg-gray-900 text-gray-500">Select a type...</option>
-                  {ORG_TYPES.map(type => (
-                    <option key={type.value} value={type.value} className="bg-white dark:bg-gray-900">{type.label}</option>
-                  ))}
-                </select>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Personal Section (Always shown) */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                <User className="w-4 h-4 text-blue-600" />
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Personal Details</span>
               </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Full Name</label>
+                  <input
+                    type="text" required placeholder="Enter your full name"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                    value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Gender</label>
+                  <select
+                    required
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                    value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  >
+                    <option value="">Select gender...</option>
+                    {GENDER_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
 
-              {/* Org Name */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-700 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  Name of Organization
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Grace Foundation"
-                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                    <Calendar className="w-3 h-3" /> Date of Birth
+                  </label>
+                  <input
+                    type="date" required
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                    value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                  />
+                </div>
 
-              {/* State */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-700 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  State
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. California"
-                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                />
-              </div>
-
-              {/* City */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-700 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  City/Town
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. San Francisco"
-                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                />
-              </div>
-
-              {/* Email */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-700 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="contact@org.com"
-                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-
-              {/* Phone */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-700 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  required
-                  placeholder="+1 (555) 000-0000"
-                  className="w-full px-4 py-2.5 bg-blue-50/50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                    <MapPin className="w-3 h-3" /> Address
+                  </label>
+                  <input
+                    type="text" required placeholder="Residential address"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                    value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
+
+            {/* Organization Section (Only for Owners) */}
+            {isOwner && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Organization Setup</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Org Type</label>
+                    <select
+                      required
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                      value={formData.orgType} onChange={(e) => setFormData({ ...formData, orgType: e.target.value })}
+                    >
+                      <option value="">Select type...</option>
+                      {ORG_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Org Name</label>
+                    <input
+                      type="text" required placeholder="e.g. Grace Foundation"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                      value={formData.orgName} onChange={(e) => setFormData({ ...formData, orgName: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">State</label>
+                    <input
+                      type="text" required placeholder="e.g. California"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                      value={formData.orgState} onChange={(e) => setFormData({ ...formData, orgState: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">City</label>
+                    <input
+                      type="text" required placeholder="e.g. San Francisco"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-gray-900 dark:text-white text-sm"
+                      value={formData.orgCity} onChange={(e) => setFormData({ ...formData, orgCity: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 dark:shadow-none flex items-center justify-center gap-3 group disabled:opacity-50 mt-4"
+              className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 dark:shadow-none flex items-center justify-center gap-3 group disabled:opacity-50 mt-4"
             >
               {isLoading ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
