@@ -209,16 +209,6 @@ export const MemberDashboard: React.FC = () => {
       )}
     </div>
   );
-
-      {selectedContact && (
-        <CallLogModal 
-          contact={selectedContact}
-          onClose={() => setSelectedContact(null)}
-          onSuccess={fetchAssignedContacts}
-        />
-      )}
-    </div>
-  );
 };
 
 const FilterButton = ({ active, label, onClick }: any) => (
