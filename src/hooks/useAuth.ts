@@ -31,7 +31,8 @@ export function useAuth() {
           email: dbUser.email, 
           displayName: dbUser.displayName, 
           orgId: dbUser.orgId?._id || dbUser.orgId, 
-          role: dbUser.role 
+          role: dbUser.role,
+          setupCompleted: dbUser.setupCompleted
         };
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));

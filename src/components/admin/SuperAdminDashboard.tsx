@@ -153,10 +153,10 @@ export function SuperAdminDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Total Organizations', value: organizations.length, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/10' },
-          { label: 'Active Users', value: allUsers.filter(u => u.role !== 'suspended').length, icon: Users, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/10' },
-          { label: 'Total Logs', value: logs.length, icon: Activity, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/10' },
-          { label: 'SaaS Subscriptions', value: organizations.filter(o => o.subscription?.status === 'active').length, icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/10' },
+          { label: 'Total Organizations', value: (organizations || []).length, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/10' },
+          { label: 'Active Users', value: (allUsers || []).filter(u => u?.role !== 'suspended').length, icon: Users, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/10' },
+          { label: 'Total Logs', value: (logs || []).length, icon: Activity, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/10' },
+          { label: 'SaaS Subscriptions', value: (organizations || []).filter(o => o?.subscription?.status === 'active').length, icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/10' },
         ].map((stat) => (
           <div key={stat.label} className={cn("p-6 rounded-3xl border border-transparent shadow-sm flex items-center gap-4", stat.bg)}>
             <div className={cn("p-3 rounded-2xl bg-white dark:bg-gray-800 shadow-sm", stat.color)}>
@@ -164,7 +164,7 @@ export function SuperAdminDashboard() {
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">{stat.label}</p>
-              <h3 className="text-2xl font-black text-gray-900 dark:text-white">{stat.value}</h3>
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white">{stat.value || 0}</h3>
             </div>
           </div>
         ))}
@@ -195,12 +195,12 @@ export function SuperAdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {filteredOrgs.map((org) => (
-                  <tr key={org._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                {(filteredOrgs || []).map((org) => (
+                  <tr key={org?._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-xl flex items-center justify-center font-black">
-                          {org.name?.[0].toUpperCase() || 'O'}
+                          {org?.name?.[0]?.toUpperCase() || 'O'}
                         </div>
                         <div>
                           <p className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{org.name}</p>
@@ -249,17 +249,17 @@ export function SuperAdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                {(filteredUsers || []).map((user) => (
+                  <tr key={user?._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-5">
                       <div>
-                        <p className="font-bold text-gray-900 dark:text-white">{user.displayName || user.email}</p>
-                        <p className="text-[10px] text-gray-400">{user.email}</p>
+                        <p className="font-bold text-gray-900 dark:text-white">{user?.displayName || user?.email}</p>
+                        <p className="text-[10px] text-gray-400">{user?.email}</p>
                       </div>
                     </td>
                     <td className="px-6 py-5">
                       <select 
-                        value={user.role}
+                        value={user?.role}
                         onChange={(e) => handleUpdateUserRole(user._id, e.target.value)}
                         className="bg-gray-50 dark:bg-gray-950 border-none rounded-lg px-2 py-1 text-[10px] font-black uppercase"
                       >

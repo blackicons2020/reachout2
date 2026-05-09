@@ -95,7 +95,7 @@ function AppContent() {
     );
   }
 
-  if (profile && !profile.setupCompleted) {
+  if (profile && !profile.setupCompleted && profile.role !== 'superadmin') {
     return (
       <Routes>
         <Route path="*" element={<CompleteProfile />} />
