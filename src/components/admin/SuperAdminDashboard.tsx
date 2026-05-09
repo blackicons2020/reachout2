@@ -40,9 +40,11 @@ export function SuperAdminDashboard() {
         setAllUsers(usersRes.data);
         setLogs(logsRes.data);
         setSystemConfig(configRes.data);
+        setError(null);
         setLoading(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error('SuperAdmin fetch error:', err);
+        setError(err.response?.data?.message || err.message || 'Failed to fetch dashboard data');
         setLoading(false);
       }
     };
@@ -141,6 +143,13 @@ export function SuperAdminDashboard() {
           ))}
         </div>
       </div>
+      
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-2xl flex items-center gap-3 text-red-600 dark:text-red-400">
+          <Shield className="w-5 h-5" />
+          <p className="text-sm font-bold uppercase tracking-widest">{error}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
