@@ -553,7 +553,7 @@ async function startServer() {
       }
 
       const token = jwt.sign({ userId: user._id, orgId: orgId, role: user.role }, process.env.JWT_SECRET || 'secret');
-      res.status(201).json({ token, user: { id: user._id, email, displayName: name, orgId: orgId, role: user.role, setupCompleted } });
+      res.status(201).json({ token, user: { id: user._id, email, displayName: name, orgId: orgId, role: user.role, setupCompleted: user.setupCompleted } });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -570,7 +570,7 @@ async function startServer() {
       if (!validPassword) return res.status(400).json({ message: 'Invalid password' });
 
       const token = jwt.sign({ userId: user._id, orgId: user.orgId, role: user.role }, process.env.JWT_SECRET || 'secret');
-      res.json({ token, user: { id: user._id, email: user.email, displayName: user.displayName, orgId: user.orgId, role: user.role } });
+      res.json({ token, user: { id: user._id, email: user.email, displayName: user.displayName, orgId: user.orgId, role: user.role, setupCompleted: user.setupCompleted } });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
