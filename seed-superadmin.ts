@@ -25,7 +25,7 @@ async function seed() {
     console.log('Connected to MongoDB');
 
     const email = 'superadmin@gmail.com';
-    const password = 'ReachOut_Secure_Admin_2024!#';
+    const password = 'admin123';
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const existingUser = await User.findOne({ email });
