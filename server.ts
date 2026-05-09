@@ -12,6 +12,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import { assignmentEngine } from './services/assignmentEngine.js';
+import { sendATSMS, sendATWhatsApp, makeATCall } from './services/africasTalkingService.js';
 
 dotenv.config();
 
@@ -44,6 +45,14 @@ const OrganizationSchema = new mongoose.Schema({
       authToken: String, 
       smsFromNumber: String, 
       whatsappFromNumber: String 
+    },
+    africasTalking: {
+      username: String,
+      apiKey: String,
+      smsFrom: String,
+      whatsappFrom: String,
+      voiceFrom: String,
+      isSandbox: { type: Boolean, default: true }
     },
     whatsapp: { apiKey: String, phoneNumberId: String },
     voice: { provider: String, apiKey: String, phoneNumberId: String, elevenLabsKey: String, agentId: String, usePlatformDefault: Boolean },
@@ -317,7 +326,22 @@ async function startServer() {
             defaultCode: org.settings.profile?.countryCode?.replace('+', '') || '234'
           });
         } catch (e) {
-          console.error('[Invite] Automated send failed:', e);
+          console.error('[Invite] Automated Twilio send failed:', e);
+        }
+      }
+
+      // Try automated sending if Africa's Talking is configured
+      if (!automatedSend && org?.settings?.africasTalking?.apiKey && org?.settings?.africasTalking?.username) {
+        try {
+          automatedSend = await sendATWhatsApp({
+            username: org.settings.africasTalking.username,
+            apiKey: org.settings.africasTalking.apiKey,
+            to: phone,
+            message,
+            from: org.settings.africasTalking.whatsappFrom
+          });
+        } catch (e) {
+          console.error('[Invite] Automated AT send failed:', e);
         }
       }
 
@@ -920,15 +944,35 @@ async function startServer() {
 
       for (const contact of targetContacts) {
         try {
-          const success = await sendTwilioMessage({
-            type: campaign.type,
-            to: contact.phone,
-            message: campaign.message.replace(/{{first_name}}/g, contact.firstName || ''),
-            accountSid: org.settings.twilio.accountSid,
-            authToken: org.settings.twilio.authToken,
-            from: campaign.type === 'whatsapp' ? org.settings.twilio?.whatsappFromNumber : org.settings.twilio?.smsFromNumber,
-            defaultCode: org.settings.profile?.countryCode?.replace('+', '') || '234'
-          });
+          let success = false;
+          
+          // Determine which provider to use
+          if (campaign.type === 'whatsapp' || campaign.type === 'sms') {
+            // Check Africa's Talking first if configured
+            if (org.settings?.africasTalking?.apiKey) {
+              const atMethod = campaign.type === 'whatsapp' ? sendATWhatsApp : sendATSMS;
+              success = await atMethod({
+                username: org.settings.africasTalking.username,
+                apiKey: org.settings.africasTalking.apiKey,
+                to: contact.phone,
+                message: campaign.message.replace(/{{first_name}}/g, contact.firstName || ''),
+                from: campaign.type === 'whatsapp' ? org.settings.africasTalking.whatsappFrom : org.settings.africasTalking.smsFrom
+              });
+            } 
+            
+            // Fallback to Twilio if AT failed or not configured
+            if (!success && org.settings?.twilio?.accountSid) {
+              success = await sendTwilioMessage({
+                type: campaign.type,
+                to: contact.phone,
+                message: campaign.message.replace(/{{first_name}}/g, contact.firstName || ''),
+                accountSid: org.settings.twilio.accountSid,
+                authToken: org.settings.twilio.authToken,
+                from: campaign.type === 'whatsapp' ? org.settings.twilio?.whatsappFromNumber : org.settings.twilio?.smsFromNumber,
+                defaultCode: org.settings.profile?.countryCode?.replace('+', '') || '234'
+              });
+            }
+          }
           
           if (success) {
             sentCount++;

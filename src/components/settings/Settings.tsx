@@ -34,6 +34,7 @@ export function Settings() {
   const [orgSettings, setOrgSettings] = useState<any>({
     profile: { name: '', industry: 'Religious Organization', countryCode: '+234', timezone: '(GMT+01:00) Lagos', logo: '', autoBranding: true, brandName: '' },
     twilio: { accountSid: '', authToken: '', smsFromNumber: '', whatsappFromNumber: '' },
+    africasTalking: { username: '', apiKey: '', smsFrom: '', whatsappFrom: '', voiceFrom: '', isSandbox: true },
     whatsapp: { apiKey: '', phoneNumberId: '' },
     email: { apiKey: '', fromEmail: '', fromName: '' },
     voice: { provider: 'elevenlabs', apiKey: '', phoneNumberId: '', elevenLabsKey: '', agentId: '', usePlatformDefault: false },
@@ -68,6 +69,10 @@ export function Settings() {
             whatsapp: {
               ...orgSettings.whatsapp,
               ...data.settings?.whatsapp
+            },
+            africasTalking: {
+              ...orgSettings.africasTalking,
+              ...data.settings?.africasTalking
             },
             notifications: {
               ...orgSettings.notifications,
@@ -298,6 +303,60 @@ export function Settings() {
                     </div>
                   )}
 
+                  {editingIntegration === 'Africa\'s Talking' && (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Username</label>
+                          <input type="text" placeholder="sandbox or username" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={orgSettings.africasTalking?.username || ''} onChange={(e) => updateIntegration('africasTalking', { username: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">API Key</label>
+                          <input type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={orgSettings.africasTalking?.apiKey || ''} onChange={(e) => updateIntegration('africasTalking', { apiKey: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">SMS Sender ID / Shortcode</label>
+                          <input type="text" placeholder="MySenderID" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={orgSettings.africasTalking?.smsFrom || ''} onChange={(e) => updateIntegration('africasTalking', { smsFrom: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">WhatsApp Number / Channel</label>
+                          <input type="text" placeholder="+234..." className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={orgSettings.africasTalking?.whatsappFrom || ''} onChange={(e) => updateIntegration('africasTalking', { whatsappFrom: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Voice Number</label>
+                          <input type="text" placeholder="+234..." className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={orgSettings.africasTalking?.voiceFrom || ''} onChange={(e) => updateIntegration('africasTalking', { voiceFrom: e.target.value })} />
+                        </div>
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Environment</label>
+                          <div className="flex items-center gap-4">
+                            <button
+                              onClick={() => updateIntegration('africasTalking', { isSandbox: true })}
+                              className={cn(
+                                "flex-1 py-3 rounded-xl font-bold text-sm border-2 transition-all",
+                                orgSettings.africasTalking?.isSandbox 
+                                  ? "bg-orange-50 border-orange-500 text-orange-600" 
+                                  : "bg-gray-50 border-gray-100 text-gray-400"
+                              )}
+                            >
+                              Sandbox (Test)
+                            </button>
+                            <button
+                              onClick={() => updateIntegration('africasTalking', { isSandbox: false })}
+                              className={cn(
+                                "flex-1 py-3 rounded-xl font-bold text-sm border-2 transition-all",
+                                !orgSettings.africasTalking?.isSandbox 
+                                  ? "bg-green-50 border-green-500 text-green-600" 
+                                  : "bg-gray-50 border-gray-100 text-gray-400"
+                              )}
+                            >
+                              Live (Production)
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-col md:flex-row gap-3 pt-4">
                     <button 
                       onClick={handleTestTwilio} 
@@ -317,6 +376,7 @@ export function Settings() {
                 <div className="space-y-6">
                   {[
                     { name: 'Twilio', description: 'SMS and WhatsApp integration.', icon: MessageSquare, color: 'bg-red-50 text-red-600', connected: !!orgSettings.twilio?.accountSid && !!orgSettings.twilio?.authToken },
+                    { name: 'Africa\'s Talking', description: 'Local African SMS, Voice & WhatsApp.', icon: Smartphone, color: 'bg-orange-50 text-orange-600', connected: !!orgSettings.africasTalking?.apiKey },
                     { name: 'WhatsApp Business API', description: 'Direct Meta integration.', icon: MessageSquare, color: 'bg-green-50 text-green-600', connected: !!orgSettings.whatsapp?.apiKey },
                   ].map((integration) => (
                     <div key={integration.name} className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between gap-6">
