@@ -51,7 +51,7 @@ const OrganizationSchema = new mongoose.Schema({
       apiKey: String,
       smsFrom: String,
       whatsappFrom: String,
-      voiceFrom: String,
+      // voiceFrom: String,
       isSandbox: { type: Boolean, default: true }
     },
     whatsapp: { apiKey: String, phoneNumberId: String },

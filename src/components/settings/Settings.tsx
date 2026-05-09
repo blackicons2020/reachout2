@@ -322,10 +322,12 @@ export function Settings() {
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">WhatsApp Number / Channel</label>
                           <input type="text" placeholder="+234..." className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={orgSettings.africasTalking?.whatsappFrom || ''} onChange={(e) => updateIntegration('africasTalking', { whatsappFrom: e.target.value })} />
                         </div>
+                        {/* 
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Voice Number</label>
                           <input type="text" placeholder="+234..." className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" value={orgSettings.africasTalking?.voiceFrom || ''} onChange={(e) => updateIntegration('africasTalking', { voiceFrom: e.target.value })} />
                         </div>
+                        */}
                         <div className="space-y-4">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Environment</label>
                           <div className="flex items-center gap-4">
