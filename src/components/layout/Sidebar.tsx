@@ -91,7 +91,7 @@ export function Sidebar({ onClose, notifications = [], contactCount = 0 }: { onC
 
       // If subscription is inactive but they are in trial, allow core features
       if (!isSubscriptionActive) {
-        const isCoreFeature = ['Dashboard', 'Contacts', 'Campaigns', 'Inbox', 'Notifications', 'Reports'].includes(item.name);
+        const isCoreFeature = ['Dashboard', 'Contacts', 'Campaigns', 'Inbox', 'Notifications', 'Reports', 'My Tasks', 'Members', 'Performance'].includes(item.name);
         const isManagementFeature = ['Billing', 'Settings'].includes(item.name);
         
         if (contactCount < TRIAL_LIMIT) {
