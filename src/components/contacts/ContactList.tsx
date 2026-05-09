@@ -281,7 +281,7 @@ export function ContactList({
                   <td className="px-6 py-5">
                     <button onClick={() => onEditContact(contact)} className="flex items-center gap-4 hover:text-blue-600 transition-all group/name">
                       <div>
-                        <p className="font-black text-gray-900 dark:text-white uppercase text-xs tracking-tight">{contact.firstName} {contact.lastName}</p>
+                        <p className="font-bold text-gray-900 dark:text-white text-xs">{contact.firstName} {contact.lastName}</p>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{contact.id?.slice(-6) || 'NEW'}</p>
                       </div>
                     </button>
@@ -295,9 +295,9 @@ export function ContactList({
                   {/* Render specialized cells */}
                   {organizationType === 'religious' && (
                     <>
-                      <td className="px-6 py-5 text-gray-600 dark:text-gray-400 text-xs font-bold uppercase">{contact.location || '-'}</td>
-                      <td className="px-6 py-5 text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-tight">{contact.outreachDate || '-'}</td>
-                      <td className="px-6 py-5 text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-tight">{contact.source || '-'}</td>
+                      <td className="px-6 py-5 text-gray-600 dark:text-gray-400 text-xs font-bold">{contact.location || contact.customFields?.location || '-'}</td>
+                      <td className="px-6 py-5 text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase">{contact.outreachDate || contact.customFields?.outreachDate || '-'}</td>
+                      <td className="px-6 py-5 text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase">{contact.source || contact.customFields?.source || '-'}</td>
                     </>
                   )}
                   {organizationType === 'political' && (
@@ -338,12 +338,12 @@ export function ContactList({
 
                   <td className="px-6 py-5">
                     <span className={cn(
-                      "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
-                      contact.status === 'active' ? "bg-green-50 text-green-600 border-green-100" : 
-                      contact.status === 'inactive' ? "bg-gray-50 text-gray-400 border-gray-100" : 
-                      contact.status === 'engaged' ? "bg-blue-50 text-blue-600 border-blue-100" :
-                      contact.status === 'cold' ? "bg-red-50 text-red-400 border-red-100" :
-                      "bg-blue-50 text-blue-600 border-blue-100"
+                      "text-[10px] font-black uppercase tracking-widest",
+                      contact.status === 'active' ? "text-green-500" : 
+                      contact.status === 'inactive' ? "text-gray-400" : 
+                      contact.status === 'engaged' ? "text-blue-500" :
+                      contact.status === 'cold' ? "text-red-400" :
+                      "text-blue-500"
                     )}>
                       {contact.status || 'active'}
                     </span>

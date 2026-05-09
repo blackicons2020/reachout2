@@ -86,7 +86,7 @@ export const MemberDashboard: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex gap-4">
                     <div>
-                      <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                      <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors text-xs">
                         {contact.firstName} {contact.lastName}
                       </h3>
                       <p className="text-sm text-gray-400 font-medium">
